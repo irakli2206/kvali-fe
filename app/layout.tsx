@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Google_Sans_Flex } from "next/font/google";
 import "./globals.css";
+import Header, { NavigationSection } from "@/components/shared/header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const googleSansFlex = Google_Sans_Flex({
+  variable: "--font-google-sans-flex",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -22,10 +19,39 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const navigationData: NavigationSection[] = [
+    {
+      title: "About us",
+      href: "#",
+    },
+    {
+      title: "Services",
+      href: "#",
+    },
+    {
+      title: "Work",
+      href: "#",
+    },
+    {
+      title: "Team",
+      href: "#",
+    },
+    {
+      title: "Pricing",
+      href: "#",
+    },
+    {
+      title: "Awards",
+      href: "#",
+    },
+  ];
+
+
+
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={` ${googleSansFlex.className} antialiased `}
       >
         {children}
       </body>
