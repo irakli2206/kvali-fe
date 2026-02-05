@@ -6,6 +6,8 @@ import Header, { NavigationSection } from "@/components/shared/header";
 const googleSansFlex = Google_Sans_Flex({
   variable: "--font-google-sans-flex",
   subsets: ["latin"],
+  display: 'swap',
+  fallback: ['system-ui']
 });
 
 
