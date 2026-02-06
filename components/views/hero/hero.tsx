@@ -43,9 +43,14 @@ function Hero({ avatarList }: HeroSectionProps) {
                         <div className="flex flex-col max-w-5xl mx-auto gap-8">
                             <div className="relative flex flex-col text-center items-center sm:gap-6 gap-4">
                                 <motion.h1
-                                    initial={{ opacity: 0, y: 32 }}
+                                    initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 1, ease: "easeInOut" }}
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 260,
+                                        damping: 20,
+                                        delay: 0
+                                    }}
                                     className="lg:text-8xl md:text-7xl text-5xl font-medium leading-14 md:leading-20 lg:leading-24"
                                 >
                                     Turning your raw DNA into {" "}
@@ -56,9 +61,14 @@ function Hero({ avatarList }: HeroSectionProps) {
                                     </span>
                                 </motion.h1>
                                 <motion.p
-                                    initial={{ opacity: 0, y: 32 }}
+                                    initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 1, delay: 0.1, ease: "easeInOut" }}
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 260,
+                                        damping: 20,
+                                        delay: 0.1
+                                    }}
                                     className="text-base font-normal max-w-2xl text-muted-foreground"
                                 >
                                     At shadcn space, we help small startups tackle the world's
@@ -67,9 +77,14 @@ function Hero({ avatarList }: HeroSectionProps) {
                                 </motion.p>
                             </div>
                             <motion.div
-                                initial={{ opacity: 0, y: 32 }}
+                                initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 1, delay: 0.2, ease: "easeInOut" }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 260,
+                                    damping: 20,
+                                    delay: 0.2
+                                }}
                                 className="flex items-center flex-col md:flex-row justify-center gap-8"
                             >
                                 <CTAButton />

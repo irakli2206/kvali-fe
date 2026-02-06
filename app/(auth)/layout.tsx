@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Google_Sans_Flex } from "next/font/google";
 import "../globals.css";
 import Header, { NavigationSection } from "@/components/shared/header";
-import AuthHeader from "@/components/shared/auth-header";
+import AuthHeader from "@/components/auth/auth-header";
 
 
 export default function AuthLayout({

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Google_Sans_Flex } from "next/font/google";
 import "./globals.css";
 import Header, { NavigationSection } from "@/components/shared/header";
+import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/components/shared/theme-provider";
+
 
 const googleSansFlex = Google_Sans_Flex({
   variable: "--font-google-sans-flex",
@@ -53,9 +56,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={` ${googleSansFlex.className} antialiased `}
+        className={` ${googleSansFlex.variable} antialiased `}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <main>{children}</main>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

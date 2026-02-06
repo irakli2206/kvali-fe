@@ -16,24 +16,20 @@ import { useForm } from "@tanstack/react-form"
 import { zodValidator } from '@tanstack/zod-form-adapter'
 import { z } from 'zod'
 import { toast } from "sonner"
+import { signupSchema } from '@/types/schemas'
+import { signup } from '@/app/(auth)/actions'
+import { useRouter } from 'next/navigation'
 
 export function SignupForm({
     className,
     ...props
 }: React.ComponentProps<"div">) {
+    const router = useRouter()
 
-    // 1. Updated Schema with relevant messages
-    const formSchema = z.object({
-        email: z.string().email("Please enter a valid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
-        confirmPassword: z.string().min(8, "Please confirm your password"),
-    }).refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords don't match",
-        path: ["confirmPassword"],
-    })
 
     const form = useForm({
         // 2. Add the adapter here so TanStack knows how to use Zod
+        //@ts-ignore
         validatorAdapter: zodValidator(),
         defaultValues: {
             email: "",
@@ -41,17 +37,33 @@ export function SignupForm({
             confirmPassword: "",
         },
         validators: {
-            onChange: formSchema, // Validates as they type
+            onChange: signupSchema, // Validates as they type
         },
         onSubmit: async ({ value }) => {
-            console.log("Form Submitted:", value)
-            toast.success("Account created successfully!")
+            try {
+                const result = await signup(value)
+                console.log(result)
+                // If the action returns an error object (instead of redirecting)
+                if (result?.error) {
+                    toast.error(result.error)
+                    return
+                }
+
+                if (result?.success) {
+                    // This happens client-side, keeping the UI responsive
+                    router.push('/app')
+                    router.refresh() // Ensures the layout sees the new session
+                }
+            } catch (err) {
+                // This catches unexpected network errors
+                toast.error("Something went wrong. Please try again.")
+            }
         },
     })
 
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <Card className="overflow-hidden p-0 shadow-none">
+            <Card className="overflow-hidden p-0 shadow-none rounded-sm">
                 <CardContent className="grid p-0 md:grid-cols-2">
                     <form
                         className="p-6 md:p-8"
@@ -169,6 +181,10 @@ export function SignupForm({
                     </div>
                 </CardContent>
             </Card>
+            <FieldDescription className="px-6 text-center">
+                By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+                and <a href="#">Privacy Policy</a>.
+            </FieldDescription>
         </div>
     )
 }

@@ -1,0 +1,104 @@
+"use client"
+
+import * as React from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { Virtuoso } from "react-virtuoso"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+
+interface Sample {
+    "Object-ID": string;
+    "Simplified_Culture": string;
+    [key: string]: any;
+}
+
+export function LargeSampleSearch({ samples = [], onSelect }: { samples: Sample[], onSelect: (s: Sample) => void }) {
+    const [open, setOpen] = React.useState(false)
+    const [value, setValue] = React.useState("")
+    const [search, setSearch] = React.useState("")
+
+    console.log('samples', samples)
+
+    // 1. Guard against undefined samples during filtering
+    const filteredSamples = React.useMemo(() => {
+        if (!samples || !Array.isArray(samples)) return []
+        if (!search) return samples
+
+        const s = search.toLowerCase()
+        return samples.filter(item =>
+            item['Object-ID']?.toLowerCase().includes(s) ||
+            item['Simplified_Culture']?.toLowerCase().includes(s)
+        )
+    }, [search, samples])
+
+    // 2. Early return if samples haven't loaded yet
+    if (!samples) {
+        return <Button variant="outline" className="w-[450px]" disabled>Loading samples...</Button>
+    }
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-[450px] justify-between font-normal"
+                >
+                    {value ? value : "Select genetic sample..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[450px] p-0 shadow-2xl">
+                <Command shouldFilter={false}>
+                    <CommandInput
+                        placeholder="Search ID or culture..."
+                        value={search}
+                        onValueChange={setSearch}
+                    />
+                    <CommandList className="max-h-none">
+                        {/* 3. Safety check on the length property */}
+                        {(filteredSamples?.length ?? 0) === 0 && (
+                            <CommandEmpty>No samples found.</CommandEmpty>
+                        )}
+                        <CommandGroup>
+                            <Virtuoso
+                                style={{ height: "400px" }}
+                                data={filteredSamples}
+                                itemContent={(index, sample) => (
+                                    <CommandItem
+                                        key={sample["Object-ID"]}
+                                        value={sample["Object-ID"]}
+                                        onSelect={(currentValue) => {
+                                            setValue(currentValue)
+                                            onSelect(sample)
+                                            setOpen(false)
+                                        }}
+                                        className="flex flex-col items-start py-3"
+                                    >
+                                        <span className="font-bold text-sm">{sample["Object-ID"]}</span>
+                                        <span className="text-[10px] text-zinc-500 uppercase">
+                                            {sample["Simplified_Culture"]}
+                                        </span>
+                                    </CommandItem>
+                                )}
+                            />
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
+}
