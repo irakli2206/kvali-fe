@@ -27,7 +27,7 @@ interface Sample {
     [key: string]: any;
 }
 
-export function LargeSampleSearch({ samples = [], onSelect }: { samples: Sample[], onSelect: (s: Sample) => void }) {
+export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
     const [open, setOpen] = React.useState(false)
     const [search, setSearch] = React.useState("")
 
@@ -85,8 +85,8 @@ export function LargeSampleSearch({ samples = [], onSelect }: { samples: Sample[
                                         value={sample["id"]}
                                         onSelect={async (currentValue) => {
                                             const sampleData = await getSampleDetails(currentValue)
-                                            setSelectedSample(sampleData)
-                                            onSelect(sample)
+                                            console.log('sampleData', sampleData)
+                                            setSelectedSample(sampleData.data)
                                             setOpen(false)
                                         }}
                                         className="flex flex-col items-start py-3"

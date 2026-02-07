@@ -37,10 +37,11 @@ import { Command, CommandInput, CommandEmpty, CommandList, CommandItem } from "@
 import { Button } from '../ui/button'
 import { LargeSampleSearch } from './large-sample-search'
 import { useArchiveStore } from "@/store/use-map-store"
+import Link from 'next/link'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
-    const { setSelectedSample, setTargetSample } = useArchiveStore((state) => state);
+    const { setTargetSample } = useArchiveStore((state) => state);
 
     const resetTargetSample = () => {
         setTargetSample(null)
@@ -49,11 +50,13 @@ const AppHeader = ({ samples }: any) => {
     return (
         <div className='w-full flex justify-between gap-4 min-h-8'>
             <section>
-                <Image src={Logo} alt='' width={128} height={128} className='h-8 w-fit' />
+                <Link href="/">
+                    <Image src={Logo} alt='' width={128} height={128} className='h-8 w-fit' />
+                </Link>
             </section>
 
             <section className='w-1/3'>
-                <LargeSampleSearch samples={samples} onSelect={setSelectedSample} />
+                <LargeSampleSearch samples={samples} />
             </section>
 
             <section>

@@ -8,7 +8,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils'
 import { useArchiveStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
-import { Clock, ClockFading, Cross, Dna, Grid2X2X, Link, LucideIcon, Star, VenusAndMars, X } from 'lucide-react'
+import { ArrowLeftIcon, Clock, ClockFading, Cross, Dna, Grid2X2X, Link, List, LucideIcon, Map, Star, VenusAndMars, X } from 'lucide-react'
 import { Sample } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import CoverageBadge from '@/components/shared/coverage-badge'
@@ -16,7 +16,9 @@ import { calculateDistances } from '@/lib/g25-utils'
 import { getSampleDetails } from '@/lib/api/samples'
 import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from '@/components/ui/skeleton'
-
+import { ButtonGroup } from '@/components/ui/button-group'
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '@/components/ui/dropdown-menu'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
@@ -25,58 +27,90 @@ const parseCoords = (val: string | number) =>
     typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
 
 const PING_HTML = `
-    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-700 border-2 border-white"></span>
+    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-stone-500 opacity-75"></span>
+    <span class="relative inline-flex rounded-full h-3 w-3 bg-stone-900 border-2 border-white"></span>
 `;
 
 export default function MapView({ data }: { data: any[] }) {
     const [mapData, setMapData] = useState(data);
     const { selectedSample, setSelectedSample, targetSample, setTargetSample } = useArchiveStore();
 
+    const [showMatchesList, setShowMatchesList] = useState<boolean>(false)
+
+    const [activeTheme, setActiveTheme] = useState<'Standard' | 'Light-V11' | 'Dark-V11'>('Light-V11')
+
     // Refs for Mapbox instance management
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const pingRef = useRef<mapboxgl.Marker | null>(null);
     const popupRef = useRef<mapboxgl.Popup | null>(null);
-
-    // Portal State
     const [popupContainer, setPopupContainer] = useState<HTMLDivElement | null>(null);
 
+
+
     const geojsonData = useMemo(() => csvToGeoJSON(mapData), [mapData]);
-    const handleCalculateDists = (target?: Sample | null) => {
+    const nearestMatches = useMemo(() => {
+        if (!targetSample) return [];
+
+        return [...geojsonData.features]
+            .map(f => f.properties)
+            .filter(p => p.distance != null && p.id !== targetSample.id)
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 10);
+    }, [geojsonData, targetSample]);
+
+    console.log('nearestMatches', nearestMatches)
+
+    const handleCalculateDists = (target: Sample) => {
 
         const updated = runComparisonLogic(target.id, mapData, target.g25_string!);
         setTargetSample(target!)
         setMapData(updated);
+        setShowMatchesList(true)
     };
 
 
 
 
-    // --- Effect: Sync Map Data (Distance Visuals) ---
     useEffect(() => {
         const map = mapRef.current;
-        if (!map?.isStyleLoaded()) return;
+        if (!map) return;
 
-        const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
-        if (source) source.setData(geojsonData);
+        // 1. Change the style
+        map.setStyle('mapbox://styles/mapbox/' + activeTheme.toLowerCase());
 
+        // 2. Wait for the new style to load, then re-add your data
+        const handleStyleData = () => {
+            // Only add if it doesn't already exist (prevent duplicates)
+            if (!map.getSource('ancient-samples')) {
+                map.addSource('ancient-samples', {
+                    type: 'geojson',
+                    data: geojsonData,
+                });
 
-        if (map.getLayer('ancient-points')) {
-            if (targetSample) {
-                // 1. CALCULATED STATE: Color by genetic distance
-                map.setPaintProperty('ancient-points', 'circle-color', [
-                    'interpolate', ['linear'], ['get', 'distance'],
-                    0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
-                ]);
-            } else {
-                // 2. RESET STATE: Back to original stone color
-                map.setPaintProperty('ancient-points', 'circle-color', '#78716c');
-
-
+                map.addLayer({
+                    id: 'ancient-points',
+                    type: 'circle',
+                    source: 'ancient-samples',
+                    paint: {
+                        'circle-radius': 4,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff',
+                        'circle-color': targetSample ? [
+                            'interpolate', ['linear'], ['get', 'distance'],
+                            0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
+                        ] : '#78716c',
+                    },
+                });
             }
-        }
-    }, [geojsonData, targetSample]);
+        };
+
+        map.on('styledata', handleStyleData);
+
+        return () => {
+            map.off('styledata', handleStyleData);
+        };
+    }, [activeTheme, geojsonData, targetSample]);
 
 
 
@@ -89,6 +123,11 @@ export default function MapView({ data }: { data: any[] }) {
             center: [20, 45],
             zoom: 5,
         });
+
+        // Add zoom and rotation controls (Built-in)
+        // map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+
 
         mapRef.current = map;
 
@@ -154,26 +193,115 @@ export default function MapView({ data }: { data: any[] }) {
         const lng = parseCoords(selectedSample["Longitude"]);
         if (isNaN(lat) || isNaN(lng)) return;
 
+        // 1. Handle Ping Marker
         if (pingRef.current) pingRef.current.remove();
-
         const el = document.createElement('div');
         el.className = 'relative flex h-8 w-8 items-center justify-center';
         el.innerHTML = PING_HTML;
-
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(mapRef.current);
+
+        // 2. Handle Flying
         mapRef.current.flyTo({ center: [lng, lat - 1], zoom: 5, essential: true });
+
+        // 3. FORCE POPUP OPEN (The change you needed)
+        // Clear existing popup if any
+        if (popupRef.current) popupRef.current.remove();
+
+        const container = document.createElement('div');
+        setPopupContainer(container); // This triggers the Portal
+
+        const popup = new mapboxgl.Popup({ offset: 10, closeButton: false, anchor: 'top' })
+            .setLngLat([lng, lat])
+            .setDOMContent(container)
+            .addTo(mapRef.current);
+
+        popupRef.current = popup;
+
+        // Optional: Reset popupContainer when popup is closed via Mapbox X or similar
+        popup.on('close', () => setPopupContainer(null));
+
     }, [selectedSample]);
 
-
+    console.log('sel', selectedSample)
 
     const closePopup = () => {
         if (popupRef.current) popupRef.current.remove();
         setPopupContainer(null);
     };
 
+    console.log('geojsonData', geojsonData)
+
     return (
         <div className="relative w-full h-screen bg-[#f8f8f8]">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+            {/* <div className="bg-white/30 backdrop-blur border rounded-sm w-fit h-20 absolute inset-2 p-2">
+                <h1 className="font-semibold text-sm">Kvali Engine</h1>
+                <p className="text-muted-foreground text-xs font-light">{data.length} samples loaded</p>
+            </div> */}
+
+            <DropdownMenu >
+                <DropdownMenuTrigger asChild className="w-fit h-fit absolute right-2 top-2">
+                    <Button variant="outline">
+                        <Map />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40">
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+                        <DropdownMenuCheckboxItem
+                            checked={activeTheme === 'Light-V11'}
+                            onCheckedChange={() => setActiveTheme('Light-V11')}
+                        >
+                            Light
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                            checked={activeTheme === 'Dark-V11'}
+                            onCheckedChange={() => setActiveTheme('Dark-V11')}
+                        >
+                            Dark
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                            checked={activeTheme === 'Standard'}
+                            onCheckedChange={() => setActiveTheme('Standard')}
+                        >
+                            Standard
+                        </DropdownMenuCheckboxItem>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* <ButtonGroup className="w-fit h-fit absolute right-2 top-2 gap-4" orientation={'vertical'}>
+                <Button variant="outline" size="icon" aria-label="Change theme">
+                    <Map />
+                </Button>
+
+            </ButtonGroup> */}
+            {/* <ToggleGroup className="w-fit h-fit absolute right-2 top-12 gap-4 bg-white" variant="outline" size='sm'  type="multiple">
+                <ToggleGroupItem value="bold">
+                    <List />
+                </ToggleGroupItem>
+
+            </ToggleGroup> */}
+            {/* 
+            {showMatchesList &&
+                <div className="bg-white backdrop-blur border rounded-sm w-fit h-fit absolute right-12 top-2 p-2">
+                    <h1 className="font-semibold text-sm">Nearest matches</h1>
+                    <div className="flex flex-col text-sm gap-0.5">
+                        {nearestMatches &&
+                            nearestMatches.map(match => {
+                                return (
+                                    <p className='flex justify-between gap-20 cursor-pointer'
+                                        onClick={() => setSelectedSample(match)}
+                                    ><span>{match['Simplified_Culture']}:{match['Object-ID']}</span> <Badge variant={'outline'}>{match.distance.toFixed(3)}</Badge></p>
+                                )
+                            })
+                        }
+
+                    </div>
+                </div>
+            } */}
+
 
             {popupContainer && selectedSample && createPortal(
                 <MapPopup
