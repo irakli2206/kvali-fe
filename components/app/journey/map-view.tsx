@@ -13,6 +13,7 @@ import { Sample } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import CoverageBadge from '@/components/shared/coverage-badge'
 import { calculateDistances } from '@/lib/g25-utils'
+import { getSampleDetails } from '@/lib/api/samples'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
@@ -21,8 +22,8 @@ const parseCoords = (val: string | number) =>
     typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
 
 const PING_HTML = `
-    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 border-2 border-white"></span>
+    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-800 border-2 border-white"></span>
 `;
 
 export default function MapView({ data }: { data: any[] }) {
@@ -93,7 +94,7 @@ export default function MapView({ data }: { data: any[] }) {
                 setSelectedSample(sample);
                 setPopupContainer(container);
 
-                const popup = new mapboxgl.Popup({ offset: 10, closeButton: false })
+                const popup = new mapboxgl.Popup({ offset: 10, closeButton: false, anchor: 'top' })
                     .setLngLat(coordinates)
                     .setDOMContent(container)
                     .addTo(map);
@@ -132,7 +133,7 @@ export default function MapView({ data }: { data: any[] }) {
         el.innerHTML = PING_HTML;
 
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(mapRef.current);
-        mapRef.current.flyTo({ center: [lng, lat], zoom: 5, essential: true });
+        mapRef.current.flyTo({ center: [lng, lat - 3], zoom: 5, essential: true });
     }, [selectedSample]);
 
     // --- Effect: Sync Map Data (Distance Visuals) ---
@@ -146,7 +147,7 @@ export default function MapView({ data }: { data: any[] }) {
         if (map.getLayer('ancient-points')) {
             map.setPaintProperty('ancient-points', 'circle-color', [
                 'interpolate', ['linear'], ['get', 'distance'],
-                0, '#3b82f6', 0.02, '#60a5fa', 0.04, '#93c5fd', 0.08, '#bfdbfe', 0.15, '#d6d3d1'
+                0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
             ]);
         }
     }, [geojsonData]);
@@ -173,7 +174,21 @@ export default function MapView({ data }: { data: any[] }) {
 
 // --- Sub-Component: Popup ---
 function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDists: (id: string) => void }) {
-    const dateNum = Number(sample.Mean)
+    const [data, setData] = useState<Sample>()
+
+    useEffect(() => {
+        const getData = async () => {
+            const { data: sampleData, error } = await getSampleDetails(sample.id)
+            setData(sampleData)
+        }
+        getData()
+    }, [sample])
+
+    console.log('data', data)
+
+    if (!data) return <></>
+
+    const dateNum = Number(data.Mean)
     const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
     const content = [
         {
@@ -184,32 +199,32 @@ function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDis
         {
             icon: ClockFading,
             label: 'Dating Method',
-            value: sample['Method-Date']
+            value: data['Method-Date']
         },
         {
             icon: VenusAndMars,
             label: 'Sex',
-            value: sample.Sex
+            value: data.Sex
         },
         {
             icon: Dna,
             label: 'Y-DNA',
-            value: <a href={sample['Y-YFull']} target='_blank' className='flex items-center gap-1'>{sample.YFull || 'N/A'} <Link className='w-2.5' /></a>
+            value: <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1'>{data.YFull || 'N/A'} <Link className='w-2.5' /></a>
         },
         {
             icon: Dna,
             label: 'mtDNA',
-            value: <a href={sample['mt-YFull']} target='_blank' className='flex items-center gap-1'>{sample.mtree || 'N/A'} <Link className='w-2.5' /> </a>
+            value: <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1'>{data.mtree || 'N/A'} <Link className='w-2.5' /> </a>
         },
         {
             icon: Grid2X2X,
             label: 'Autosomal Coverage',
-            value: <CoverageBadge coverage={sample['Autosomal-Coverage']} />
+            value: <CoverageBadge coverage={data['Autosomal-Coverage']} />
         },
     ]
 
     return (
-        <div className="w-md bg-white border rounded-md drop-shadow-xs flex flex-col">
+        <div className="w-md min-h-300px bg-white border rounded-md drop-shadow-xs flex flex-col">
             <header className='flex w-full   p-1 items-center justify-between border-b'>
                 <Button variant="ghost" size="icon-sm">
                     <X className='' />
@@ -223,8 +238,8 @@ function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDis
 
             <main className="flex flex-col p-4 gap-4">
                 <div className="">
-                    <h6 className="font-medium text-lg">{sample['Simplified_Culture']} ({sample['Object-ID']})</h6>
-                    <span className='text-muted-foreground'>{sample.Location}, {sample.Country}</span>
+                    <h6 className="font-medium text-lg">{data['Simplified_Culture']} ({data['Object-ID']})</h6>
+                    <span className='text-muted-foreground'>{data.Location}, {data.Country}</span>
                 </div>
                 <dl className='flex flex-col gap-1'>
                     {
@@ -233,17 +248,17 @@ function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDis
                 </dl>
 
                 <aside className="flex flex-col gap-2 ">
-                    {sample['Kinship-Notes'] &&
+                    {data['Kinship-Notes'] &&
                         <div className='px-3 py-2 bg-muted rounded-sm'>
                             <p className='mb-0 '>Additional Information</p>
-                            <p className="text-muted-foreground text-xs">{sample['Kinship-Notes']}</p>
+                            <p className="text-muted-foreground text-xs">{data['Kinship-Notes']}</p>
                         </div>
                     }
                 </aside>
             </main>
 
             <footer className="flex flex-col gap-2 p-4 pt-0">
-                <Button variant='secondary' onClick={() => onCalculateDists(sample.id)} >Calculate Distances</Button>
+                <Button variant='secondary' onClick={() => onCalculateDists(data.id)} >Calculate Distances</Button>
             </footer>
 
         </div>
