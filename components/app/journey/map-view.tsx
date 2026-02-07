@@ -14,6 +14,9 @@ import { Badge } from '@/components/ui/badge'
 import CoverageBadge from '@/components/shared/coverage-badge'
 import { calculateDistances } from '@/lib/g25-utils'
 import { getSampleDetails } from '@/lib/api/samples'
+import { useQuery } from '@tanstack/react-query'
+import { Skeleton } from '@/components/ui/skeleton'
+
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
@@ -183,70 +186,46 @@ export default function MapView({ data }: { data: any[] }) {
     );
 }
 
+const PopupSkeleton = () => (
+    <div className="w-md rounded-md min-h-[300px] bg-white border p-4 space-y-4">
+        <div className="space-y-2">
+            <Skeleton className="h-6 w-[200px]" /> {/* Title */}
+            <Skeleton className="h-4 w-[150px]" /> {/* Location */}
+        </div>
+        <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex gap-2">
+                    <Skeleton className="h-4 w-4 rounded-full" />
+                    <Skeleton className="h-4 flex-1" />
+                </div>
+            ))}
+        </div>
+        <Skeleton className="h-10 w-full mt-4" /> {/* Button */}
+    </div>
+)
+
 // --- Sub-Component: Popup ---
 function MapPopup({ sample, handleCalculateDists }: { sample: Sample, handleCalculateDists: (sample: Sample) => void }) {
-    const [data, setData] = useState<Sample>()
+    // isLoading and data are managed for you
+    const { data, isLoading } = useQuery({
+        queryKey: ['sample', sample.id],
+        queryFn: () => getSampleDetails(sample.id).then(res => res.data),
+        // This prevents the UI from flickering if you click the same dot twice
+        staleTime: 1000 * 60 * 5,
+    })
 
-    useEffect(() => {
-        const getData = async () => {
-            const { data: sampleData, error } = await getSampleDetails(sample.id)
-            setData(sampleData as Sample)
-        }
-        getData()
-    }, [sample])
+    if (isLoading) return <PopupSkeleton />
+    if (!data) return null
 
 
     if (!data) return <></>
 
     const dateNum = Number(data.Mean)
     const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
-    const content = [
-        {
-            icon: Clock,
-            label: 'Date',
-            value: parsedDate
-        },
-        {
-            icon: ClockFading,
-            label: 'Dating Method',
-            value: data['Method-Date']
-        },
-        {
-            icon: VenusAndMars,
-            label: 'Sex',
-            value: data.Sex
-        },
-        {
-            icon: Dna,
-            label: 'Y-DNA',
-            // If data.YFull is missing, value becomes null, triggering N/A
-            value: data.YFull ? (
-                <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
-                    {data.YFull} <Link className='w-2.5' />
-                </a>
-            ) : null
-        },
-        {
-            icon: Dna,
-            label: 'mtDNA',
-            value: data.mtree ? (
-                <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
-                    {data.mtree} <Link className='w-2.5' />
-                </a>
-            ) : null
-        },
-        {
-            icon: Grid2X2X,
-            label: 'Autosomal Coverage',
-            // Ensure coverage isn't an empty string/null
-            value: data['Autosomal-Coverage'] ? (
-                <CoverageBadge coverage={data['Autosomal-Coverage']} />
-            ) : null
-        },
-    ]
+    const content = getPopupContent(data)
 
     return (
-        <div className="w-md min-h-300px bg-white border rounded-md drop-shadow-xs flex flex-col">
+        <div className="w-md min-h-[300px] bg-white border rounded-md drop-shadow-xs flex flex-col">
             <header className='flex w-full   p-1 items-center justify-between border-b'>
                 <Button variant="ghost" size="icon-sm">
                     <X className='' />
@@ -312,4 +291,56 @@ export const MapPopupRow = ({ icon: Icon, label, value }: MapPopupRowProps) => {
             </dd>
         </div>
     )
+}
+
+
+
+const getPopupContent = (data: Sample) => {
+    const dateNum = Number(data.Mean)
+    const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
+
+    return [
+        {
+            icon: Clock,
+            label: 'Date',
+            value: parsedDate
+        },
+        {
+            icon: ClockFading,
+            label: 'Dating Method',
+            value: data['Method-Date']
+        },
+        {
+            icon: VenusAndMars,
+            label: 'Sex',
+            value: data.Sex
+        },
+        {
+            icon: Dna,
+            label: 'Y-DNA',
+            // If data.YFull is missing, value becomes null, triggering N/A
+            value: data.YFull ? (
+                <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
+                    {data.YFull} <Link className='w-2.5' />
+                </a>
+            ) : null
+        },
+        {
+            icon: Dna,
+            label: 'mtDNA',
+            value: data.mtree ? (
+                <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
+                    {data.mtree} <Link className='w-2.5' />
+                </a>
+            ) : null
+        },
+        {
+            icon: Grid2X2X,
+            label: 'Autosomal Coverage',
+            // Ensure coverage isn't an empty string/null
+            value: data['Autosomal-Coverage'] ? (
+                <CoverageBadge coverage={data['Autosomal-Coverage']} />
+            ) : null
+        },
+    ]
 }
