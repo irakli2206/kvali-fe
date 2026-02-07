@@ -39,7 +39,6 @@ export function SigninForm({
         onSubmit: async ({ value }) => {
             try {
                 const result = await signin(value)
-                console.log(result)
                 if (result?.error) {
                     toast.error(result.error)
                     return

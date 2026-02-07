@@ -37,8 +37,6 @@ export async function signup({ email, password }: SignupValues) {
         },
     })
 
-    console.log(data)
-    console.log(error)
     if (error) {
         return { error: error.message }
     }

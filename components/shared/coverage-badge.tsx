@@ -7,7 +7,6 @@ type Props = {
 }
 
 const CoverageBadge = ({ coverage = 'N/A' }: Props) => {
-    console.log('coverage', coverage)
     let coverageNumber = parseFloat(coverage?.replace(',', '.'))
     const getVariantStyles = () => {
         if (coverageNumber > 5) return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-300/80';

@@ -6,7 +6,7 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils'
-import { useArchiveStore } from '@/store/use-archive-store'
+import { useArchiveStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
 import { Clock, ClockFading, Cross, Dna, Grid2X2X, Link, LucideIcon, Star, VenusAndMars, X } from 'lucide-react'
 import { Sample } from '@/types'
@@ -28,7 +28,7 @@ const PING_HTML = `
 
 export default function MapView({ data }: { data: any[] }) {
     const [mapData, setMapData] = useState(data);
-    const { selectedSample, setSelectedSample } = useArchiveStore();
+    const { selectedSample, setSelectedSample, targetSample, setTargetSample } = useArchiveStore();
 
     // Refs for Mapbox instance management
     const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -40,16 +40,42 @@ export default function MapView({ data }: { data: any[] }) {
     const [popupContainer, setPopupContainer] = useState<HTMLDivElement | null>(null);
 
     const geojsonData = useMemo(() => csvToGeoJSON(mapData), [mapData]);
+    const handleCalculateDists = (target?: Sample | null) => {
 
-    // --- Logic Handlers ---
-    const handleCalculateDists = (id: string) => {
-        const targetItem = mapData.find(item => item.id === id);
-        if (targetItem?.g25_string) {
-            const updated = runComparisonLogic(id, mapData, targetItem.g25_string);
-            setMapData(updated);
-
-        }
+        const updated = runComparisonLogic(target.id, mapData, target.g25_string!);
+        setTargetSample(target!)
+        setMapData(updated);
     };
+
+
+
+
+    // --- Effect: Sync Map Data (Distance Visuals) ---
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map?.isStyleLoaded()) return;
+
+        const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
+        if (source) source.setData(geojsonData);
+
+
+        if (map.getLayer('ancient-points')) {
+            if (targetSample) {
+                // 1. CALCULATED STATE: Color by genetic distance
+                map.setPaintProperty('ancient-points', 'circle-color', [
+                    'interpolate', ['linear'], ['get', 'distance'],
+                    0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
+                ]);
+            } else {
+                // 2. RESET STATE: Back to original stone color
+                map.setPaintProperty('ancient-points', 'circle-color', '#78716c');
+
+
+            }
+        }
+    }, [geojsonData, targetSample]);
+
+
 
     useEffect(() => {
         if (!mapContainerRef.current || mapRef.current) return;
@@ -77,11 +103,10 @@ export default function MapView({ data }: { data: any[] }) {
                     'circle-radius': 4,
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#fff',
-                    'circle-color': '#000',
+                    'circle-color': '#78716c',
                 },
             });
 
-            // --- RE-ADD THIS BLOCK ---
             map.on('click', 'ancient-points', (e) => {
                 const feature = e.features?.[0];
                 if (!feature) return;
@@ -136,21 +161,7 @@ export default function MapView({ data }: { data: any[] }) {
         mapRef.current.flyTo({ center: [lng, lat - 1], zoom: 5, essential: true });
     }, [selectedSample]);
 
-    // --- Effect: Sync Map Data (Distance Visuals) ---
-    useEffect(() => {
-        const map = mapRef.current;
-        if (!map?.isStyleLoaded()) return;
 
-        const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
-        if (source) source.setData(geojsonData);
-
-        if (map.getLayer('ancient-points')) {
-            map.setPaintProperty('ancient-points', 'circle-color', [
-                'interpolate', ['linear'], ['get', 'distance'],
-                0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
-            ]);
-        }
-    }, [geojsonData]);
 
     const closePopup = () => {
         if (popupRef.current) popupRef.current.remove();
@@ -164,7 +175,7 @@ export default function MapView({ data }: { data: any[] }) {
             {popupContainer && selectedSample && createPortal(
                 <MapPopup
                     sample={selectedSample}
-                    onCalculateDists={handleCalculateDists}
+                    handleCalculateDists={handleCalculateDists}
                 />,
                 popupContainer
             )}
@@ -173,18 +184,17 @@ export default function MapView({ data }: { data: any[] }) {
 }
 
 // --- Sub-Component: Popup ---
-function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDists: (id: string) => void }) {
+function MapPopup({ sample, handleCalculateDists }: { sample: Sample, handleCalculateDists: (sample: Sample) => void }) {
     const [data, setData] = useState<Sample>()
 
     useEffect(() => {
         const getData = async () => {
             const { data: sampleData, error } = await getSampleDetails(sample.id)
-            setData(sampleData)
+            setData(sampleData as Sample)
         }
         getData()
     }, [sample])
 
-    console.log('data', data)
 
     if (!data) return <></>
 
@@ -270,7 +280,7 @@ function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDis
             </main>
 
             <footer className="flex flex-col gap-2 p-4 pt-0">
-                <Button variant='secondary' onClick={() => onCalculateDists(data.id)} >Calculate Distances</Button>
+                <Button variant='secondary' onClick={() => handleCalculateDists(data)} >Calculate Distances</Button>
             </footer>
 
         </div>

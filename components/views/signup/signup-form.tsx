@@ -42,7 +42,6 @@ export function SignupForm({
         onSubmit: async ({ value }) => {
             try {
                 const result = await signup(value)
-                console.log(result)
                 // If the action returns an error object (instead of redirecting)
                 if (result?.error) {
                     toast.error(result.error)

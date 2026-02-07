@@ -19,16 +19,13 @@ export default async function AppLayout({
 
     const { data, error } = await getMapSamples()
 
-    console.log('data', data)
-
-    console.log("Data count:", data?.length)
 
 
 
     return (
         <>
             {/* 1. Add 'flex flex-col' to stack the header and card vertically */}
-            <main className="w-full h-screen bg-zinc-50 p-4 flex flex-col gap-4 overflow-hidden">
+            <main className="w-full h-screen bg-white p-4 flex flex-col gap-4 overflow-hidden">
 
                 <AppHeader samples={data} />
 

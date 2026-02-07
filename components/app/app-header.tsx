@@ -36,11 +36,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandEmpty, CommandList, CommandItem } from "@/components/ui/command"
 import { Button } from '../ui/button'
 import { LargeSampleSearch } from './large-sample-search'
-import { useArchiveStore } from "@/store/use-archive-store"
+import { useArchiveStore } from "@/store/use-map-store"
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
-    const setSelectedSample = useArchiveStore((state) => state.setSelectedSample);
+    const { setSelectedSample, setTargetSample } = useArchiveStore((state) => state);
+
+    const resetTargetSample = () => {
+        setTargetSample(null)
+    }
 
     return (
         <div className='w-full flex justify-between gap-4 min-h-8'>
@@ -53,7 +57,7 @@ const AppHeader = ({ samples }: any) => {
             </section>
 
             <section>
-
+                <Button variant='secondary' onClick={() => { resetTargetSample() }}>Reset Map</Button>
             </section>
         </div>
     )
