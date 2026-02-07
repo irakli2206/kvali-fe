@@ -120,6 +120,7 @@
   * {
     @apply border-border outline-ring/50 font-sans;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -129,7 +130,36 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+
+/* Remove default padding and rounded corners from the Mapbox container */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Style the little arrow/tip at the bottom */
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: transparent !important;
+  /* Matches your border color */
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: transparent !important;
+}
+
+/* If you want to hide the default close button to use your own */
+.mapboxgl-popup-close-button {
+  display: none;
+}
+
+.mapboxgl-popup {
+  max-width: none !important;
 }

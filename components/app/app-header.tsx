@@ -36,12 +36,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandEmpty, CommandList, CommandItem } from "@/components/ui/command"
 import { Button } from '../ui/button'
 import { LargeSampleSearch } from './large-sample-search'
-
+import { useArchiveStore } from "@/store/use-archive-store"
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
-    const [selected, onSelect] = React.useState<any>()
-
+    const setSelectedSample = useArchiveStore((state) => state.setSelectedSample);
 
     return (
         <div className='w-full flex justify-between gap-4 min-h-8'>
@@ -50,7 +49,7 @@ const AppHeader = ({ samples }: any) => {
             </section>
 
             <section className='w-1/3'>
-                <LargeSampleSearch samples={samples} onSelect={onSelect} />
+                <LargeSampleSearch samples={samples} onSelect={setSelectedSample} />
             </section>
 
             <section>

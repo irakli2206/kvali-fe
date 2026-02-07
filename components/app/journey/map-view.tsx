@@ -1,68 +1,71 @@
 "use client"
 
-import React, { useEffect, useRef, useMemo, useState } from 'react'
+import React, { useEffect, useRef, useMemo, useState, JSX, ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+
 import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils'
+import { useArchiveStore } from '@/store/use-archive-store'
+import { Button } from '@/components/ui/button'
+import { Clock, ClockFading, Cross, Dna, Grid2X2X, Link, LucideIcon, Star, VenusAndMars, X } from 'lucide-react'
+import { Sample } from '@/types'
+import { Badge } from '@/components/ui/badge'
+import CoverageBadge from '@/components/shared/coverage-badge'
+import { calculateDistances } from '@/lib/g25-utils'
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA'
+mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
-type Props = {
-    data: any[] // This is the initial data from all-ancient-dna.csv
-}
+// --- Utilities ---
+const parseCoords = (val: string | number) =>
+    typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
 
-export default function MapView({ data }: Props) {
-    // We maintain mapData locally so we can inject 'distance' properties
-    const [mapData, setMapData] = useState(data)
-    const [activeTargetId, setActiveTargetId] = useState<string | null>(null);
+const PING_HTML = `
+    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 border-2 border-white"></span>
+`;
 
-    const mapContainerRef = useRef<HTMLDivElement>(null)
-    const mapRef = useRef<mapboxgl.Map | null>(null)
+export default function MapView({ data }: { data: any[] }) {
+    const [mapData, setMapData] = useState(data);
+    const { selectedSample, setSelectedSample } = useArchiveStore();
 
-    // Memoize the GeoJSON so we don't rebuild it on every render
-    const geojsonData = useMemo(() => csvToGeoJSON(mapData), [mapData])
+    // Refs for Mapbox instance management
+    const mapContainerRef = useRef<HTMLDivElement>(null);
+    const mapRef = useRef<mapboxgl.Map | null>(null);
+    const pingRef = useRef<mapboxgl.Marker | null>(null);
+    const popupRef = useRef<mapboxgl.Popup | null>(null);
 
-    // The Bridge: Listen for the click from the raw HTML popup
+    // Portal State
+    const [popupContainer, setPopupContainer] = useState<HTMLDivElement | null>(null);
+
+    const geojsonData = useMemo(() => csvToGeoJSON(mapData), [mapData]);
+
+    // --- Logic Handlers ---
+    const handleCalculateDists = (id: string) => {
+        const targetItem = mapData.find(item => item.id === id);
+        if (targetItem?.g25_string) {
+            const updated = runComparisonLogic(id, mapData, targetItem.g25_string);
+            setMapData(updated);
+
+        }
+    };
+
     useEffect(() => {
-        const handleEvent = (e: any) => {
-            const idFromMap = e.detail;
-            const targetItem = mapData.find(item => item.id === idFromMap);
+        if (!mapContainerRef.current || mapRef.current) return;
 
-            if (targetItem && targetItem.g25_string) {
-                // We pass the raw g25_string. The logic above will extract the numbers.
-                const updated = runComparisonLogic(
-                    idFromMap,
-                    mapData,
-                    targetItem.g25_string
-                );
-                console.log('updated', updated)
-                setMapData(updated);
-                setActiveTargetId(idFromMap);
-            }
-        };
-
-        window.addEventListener('set-g25-target', handleEvent);
-        return () => window.removeEventListener('set-g25-target', handleEvent);
-    }, [mapData]);
-
-    // Initial Map Setup
-    useEffect(() => {
-        if (!mapContainerRef.current || mapRef.current) return
-
-        mapRef.current = new mapboxgl.Map({
+        const map = new mapboxgl.Map({
             container: mapContainerRef.current,
             style: 'mapbox://styles/mapbox/light-v11',
             center: [20, 45],
-            zoom: 3,
-            antialias: true
+            zoom: 5,
         });
 
-        const map = mapRef.current;
+        mapRef.current = map;
 
         map.on('load', () => {
             map.addSource('ancient-samples', {
                 type: 'geojson',
-                data: geojsonData
+                data: geojsonData,
             });
 
             map.addLayer({
@@ -70,77 +73,201 @@ export default function MapView({ data }: Props) {
                 type: 'circle',
                 source: 'ancient-samples',
                 paint: {
-                    'circle-color': '#000', // Default
                     'circle-radius': 4,
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': '#fff'
-                }
+                    'circle-stroke-color': '#fff',
+                    'circle-color': '#000',
+                },
             });
 
-            // POPUP LOGIC
+            // --- RE-ADD THIS BLOCK ---
             map.on('click', 'ancient-points', (e) => {
                 const feature = e.features?.[0];
                 if (!feature) return;
 
+                const sample = feature.properties as any;
                 const coordinates = (feature.geometry as any).coordinates.slice();
-                const { culture, id } = feature.properties as any;
 
-                new mapboxgl.Popup({ offset: 15, closeButton: false })
+                const container = document.createElement('div');
+                // Note: Check if your CSV property is 'culture' or 'Simplified_Culture'
+                setSelectedSample(sample);
+                setPopupContainer(container);
+
+                const popup = new mapboxgl.Popup({ offset: 10, closeButton: false })
                     .setLngLat(coordinates)
-                    .setHTML(`
-                        <div class="p-4 bg-white text-black border border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <h3 class="font-bold text-xs uppercase tracking-tighter mb-1">${culture}</h3>
-                            <p class="text-[10px] text-zinc-400 font-mono mb-3 uppercase">ID: ${id}</p>
-                            <button 
-                                onclick="window.dispatchEvent(new CustomEvent('set-g25-target', { detail: '${id}' }))"
-                                class="w-full text-center py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all"
-                            >
-                                Set as Target
-                            </button>
-                        </div>
-                    `)
+                    .setDOMContent(container)
                     .addTo(map);
+
+                popupRef.current = popup;
             });
 
-            map.on('mouseenter', 'ancient-points', () => map.getCanvas().style.cursor = 'pointer');
-            map.on('mouseleave', 'ancient-points', () => map.getCanvas().style.cursor = '');
+            // Change cursor on hover
+            map.on('mouseenter', 'ancient-points', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'ancient-points', () => {
+                map.getCanvas().style.cursor = '';
+            });
+            // ------------------------
         });
 
-        return () => { mapRef.current?.remove(); mapRef.current = null; }
+        return () => {
+            map.remove();
+            mapRef.current = null;
+        };
     }, []);
 
-    // UPDATE MAP WHEN DATA CHANGES
+    // --- Effect: React to Selection (Zustand) ---
+    useEffect(() => {
+        if (!selectedSample || !mapRef.current) return;
+
+        const lat = parseCoords(selectedSample["Latitude"]);
+        const lng = parseCoords(selectedSample["Longitude"]);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        if (pingRef.current) pingRef.current.remove();
+
+        const el = document.createElement('div');
+        el.className = 'relative flex h-8 w-8 items-center justify-center';
+        el.innerHTML = PING_HTML;
+
+        pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(mapRef.current);
+        mapRef.current.flyTo({ center: [lng, lat], zoom: 5, essential: true });
+    }, [selectedSample]);
+
+    // --- Effect: Sync Map Data (Distance Visuals) ---
     useEffect(() => {
         const map = mapRef.current;
-        if (!map || !map.isStyleLoaded()) return;
+        if (!map?.isStyleLoaded()) return;
 
         const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
-        if (source) {
-            source.setData(geojsonData);
-        }
+        if (source) source.setData(geojsonData);
 
         if (map.getLayer('ancient-points')) {
-            // Apply the B&W Interpolation logic
             map.setPaintProperty('ancient-points', 'circle-color', [
-                'interpolate',
-                ['linear'],
-                ['get', 'distance'],
-                0, '#eff821',      // Hot (Neon Yellow)
-                0.02, '#f48849',   // Warm (Orange)
-                0.04, '#cf448b',   // Mid (Magenta)
-                0.08, '#7201a8',   // Cool (Deep Purple)
-                0.15, '#0d0887'    // Cold (Midnight Blue)
+                'interpolate', ['linear'], ['get', 'distance'],
+                0, '#3b82f6', 0.02, '#60a5fa', 0.04, '#93c5fd', 0.08, '#bfdbfe', 0.15, '#d6d3d1'
             ]);
-
-
         }
     }, [geojsonData]);
+
+    const closePopup = () => {
+        if (popupRef.current) popupRef.current.remove();
+        setPopupContainer(null);
+    };
 
     return (
         <div className="relative w-full h-screen bg-[#f8f8f8]">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
+            {popupContainer && selectedSample && createPortal(
+                <MapPopup
+                    sample={selectedSample}
+                    onCalculateDists={handleCalculateDists}
+                />,
+                popupContainer
+            )}
+        </div>
+    );
+}
 
+// --- Sub-Component: Popup ---
+function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDists: (id: string) => void }) {
+    const dateNum = Number(sample.Mean)
+    const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
+    const content = [
+        {
+            icon: Clock,
+            label: 'Date',
+            value: parsedDate
+        },
+        {
+            icon: ClockFading,
+            label: 'Dating Method',
+            value: sample['Method-Date']
+        },
+        {
+            icon: VenusAndMars,
+            label: 'Sex',
+            value: sample.Sex
+        },
+        {
+            icon: Dna,
+            label: 'Y-DNA',
+            value: <a href={sample['Y-YFull']} target='_blank' className='flex items-center gap-1'>{sample.YFull || 'N/A'} <Link className='w-2.5' /></a>
+        },
+        {
+            icon: Dna,
+            label: 'mtDNA',
+            value: <a href={sample['mt-YFull']} target='_blank' className='flex items-center gap-1'>{sample.mtree || 'N/A'} <Link className='w-2.5' /> </a>
+        },
+        {
+            icon: Grid2X2X,
+            label: 'Autosomal Coverage',
+            value: <CoverageBadge coverage={sample['Autosomal-Coverage']} />
+        },
+    ]
+
+    return (
+        <div className="w-md bg-white border rounded-md drop-shadow-xs flex flex-col">
+            <header className='flex w-full   p-1 items-center justify-between border-b'>
+                <Button variant="ghost" size="icon-sm">
+                    <X className='' />
+                </Button>
+                <div className="flex ">
+                    <Button variant="ghost" size="icon-sm">
+                        <Star className='w-4' />
+                    </Button>
+                </div>
+            </header>
+
+            <main className="flex flex-col p-4 gap-4">
+                <div className="">
+                    <h6 className="font-medium text-lg">{sample['Simplified_Culture']} ({sample['Object-ID']})</h6>
+                    <span className='text-muted-foreground'>{sample.Location}, {sample.Country}</span>
+                </div>
+                <dl className='flex flex-col gap-1'>
+                    {
+                        content.map(r => <MapPopupRow key={r.label} {...r} />)
+                    }
+                </dl>
+
+                <aside className="flex flex-col gap-2 ">
+                    {sample['Kinship-Notes'] &&
+                        <div className='px-3 py-2 bg-muted rounded-sm'>
+                            <p className='mb-0 '>Additional Information</p>
+                            <p className="text-muted-foreground text-xs">{sample['Kinship-Notes']}</p>
+                        </div>
+                    }
+                </aside>
+            </main>
+
+            <footer className="flex flex-col gap-2 p-4 pt-0">
+                <Button variant='secondary' onClick={() => onCalculateDists(sample.id)} >Calculate Distances</Button>
+            </footer>
+
+        </div>
+    );
+}
+
+
+
+type MapPopupRowProps = {
+    icon: LucideIcon
+    label: string
+    value: ReactNode | string
+}
+
+export const MapPopupRow = ({ icon: Icon, label, value }: MapPopupRowProps) => {
+    return (
+        <div className='flex items-start gap-2'>
+            <dt className="flex-1 flex gap-2 items-center text-muted-foreground">
+                <Icon className="w-3 h-3 text-zinc-400 stroke-[2.5px]" />
+                <span className="font-medium">{label}</span>
+            </dt>
+            <dd className="flex-1 ">
+                {value}
+            </dd>
         </div>
     )
 }
