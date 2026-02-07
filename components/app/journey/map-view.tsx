@@ -23,7 +23,7 @@ const parseCoords = (val: string | number) =>
 
 const PING_HTML = `
     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-800 border-2 border-white"></span>
+    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-700 border-2 border-white"></span>
 `;
 
 export default function MapView({ data }: { data: any[] }) {
@@ -133,7 +133,7 @@ export default function MapView({ data }: { data: any[] }) {
         el.innerHTML = PING_HTML;
 
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(mapRef.current);
-        mapRef.current.flyTo({ center: [lng, lat - 3], zoom: 5, essential: true });
+        mapRef.current.flyTo({ center: [lng, lat - 1], zoom: 5, essential: true });
     }, [selectedSample]);
 
     // --- Effect: Sync Map Data (Distance Visuals) ---
@@ -209,17 +209,29 @@ function MapPopup({ sample, onCalculateDists }: { sample: Sample, onCalculateDis
         {
             icon: Dna,
             label: 'Y-DNA',
-            value: <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1'>{data.YFull || 'N/A'} <Link className='w-2.5' /></a>
+            // If data.YFull is missing, value becomes null, triggering N/A
+            value: data.YFull ? (
+                <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
+                    {data.YFull} <Link className='w-2.5' />
+                </a>
+            ) : null
         },
         {
             icon: Dna,
             label: 'mtDNA',
-            value: <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1'>{data.mtree || 'N/A'} <Link className='w-2.5' /> </a>
+            value: data.mtree ? (
+                <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
+                    {data.mtree} <Link className='w-2.5' />
+                </a>
+            ) : null
         },
         {
             icon: Grid2X2X,
             label: 'Autosomal Coverage',
-            value: <CoverageBadge coverage={data['Autosomal-Coverage']} />
+            // Ensure coverage isn't an empty string/null
+            value: data['Autosomal-Coverage'] ? (
+                <CoverageBadge coverage={data['Autosomal-Coverage']} />
+            ) : null
         },
     ]
 
@@ -274,14 +286,19 @@ type MapPopupRowProps = {
 }
 
 export const MapPopupRow = ({ icon: Icon, label, value }: MapPopupRowProps) => {
+    // Determine if the value is truly empty
+    const displayValue = (value === null || value === undefined || value === "")
+        ? <span className="text-muted-foreground/50 italic">N/A</span>
+        : value;
+
     return (
         <div className='flex items-start gap-2'>
             <dt className="flex-1 flex gap-2 items-center text-muted-foreground">
                 <Icon className="w-3 h-3 text-zinc-400 stroke-[2.5px]" />
                 <span className="font-medium">{label}</span>
             </dt>
-            <dd className="flex-1 ">
-                {value}
+            <dd className="flex-1">
+                {displayValue}
             </dd>
         </div>
     )

@@ -18,6 +18,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { useArchiveStore } from "@/store/use-archive-store"
+import { getSampleDetails } from "@/lib/api/samples"
 
 interface Sample {
     "Object-ID": string;
@@ -27,8 +29,9 @@ interface Sample {
 
 export function LargeSampleSearch({ samples = [], onSelect }: { samples: Sample[], onSelect: (s: Sample) => void }) {
     const [open, setOpen] = React.useState(false)
-    const [value, setValue] = React.useState("")
     const [search, setSearch] = React.useState("")
+
+    const { selectedSample, setSelectedSample } = useArchiveStore((state) => state)
 
     console.log('samples', samples)
 
@@ -57,7 +60,7 @@ export function LargeSampleSearch({ samples = [], onSelect }: { samples: Sample[
                     role="combobox"
                     className="w-[450px] justify-between font-normal"
                 >
-                    {value ? value : "Select genetic sample..."}
+                    {selectedSample ? selectedSample.Simplified_Culture : "Select genetic sample..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -79,10 +82,11 @@ export function LargeSampleSearch({ samples = [], onSelect }: { samples: Sample[
                                 data={filteredSamples}
                                 itemContent={(index, sample) => (
                                     <CommandItem
-                                        key={sample["Object-ID"]}
-                                        value={sample["Object-ID"]}
-                                        onSelect={(currentValue) => {
-                                            setValue(currentValue)
+                                        key={sample["id"]}
+                                        value={sample["id"]}
+                                        onSelect={async (currentValue) => {
+                                            const sampleData = await getSampleDetails(currentValue)
+                                            setSelectedSample(sampleData)
                                             onSelect(sample)
                                             setOpen(false)
                                         }}
