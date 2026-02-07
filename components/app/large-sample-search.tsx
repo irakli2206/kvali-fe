@@ -91,7 +91,7 @@ export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
                                         }}
                                         className="flex flex-col items-start py-3"
                                     >
-                                        <span className="font-bold text-sm">{sample["Object-ID"]}</span>
+                                        <span className="font-medium text-sm">{sample["Object-ID"]}</span>
                                         <span className="text-[10px] text-zinc-500 uppercase">
                                             {sample["Simplified_Culture"]}
                                         </span>

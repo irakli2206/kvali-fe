@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils'
+import { csvToGeoJSON, distanceColors, runComparisonLogic, YDNAColors } from '@/lib/map-utils'
 import { useArchiveStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon, Clock, ClockFading, Cross, Dna, Grid2X2X, Link, List, LucideIcon, Map, Star, VenusAndMars, X } from 'lucide-react'
@@ -38,6 +38,8 @@ export default function MapView({ data }: { data: any[] }) {
     const [showMatchesList, setShowMatchesList] = useState<boolean>(false)
 
     const [activeTheme, setActiveTheme] = useState<'Standard' | 'Light-V11' | 'Dark-V11'>('Light-V11')
+    const [isYdnaColorized, setIsYdnaColorized] = useState(false);
+
 
     // Refs for Mapbox instance management
     const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -79,14 +81,21 @@ export default function MapView({ data }: { data: any[] }) {
         // 1. Change the style
         map.setStyle('mapbox://styles/mapbox/' + activeTheme.toLowerCase());
 
-        // 2. Wait for the new style to load, then re-add your data
         const handleStyleData = () => {
-            // Only add if it doesn't already exist (prevent duplicates)
+            // 1. Check if the source already exists. If it does, don't try to add it again.
             if (!map.getSource('ancient-samples')) {
                 map.addSource('ancient-samples', {
                     type: 'geojson',
                     data: geojsonData,
                 });
+            }
+
+            // 2. Check if the layer already exists.
+            if (!map.getLayer('ancient-points')) {
+                // Decide color logic
+                const circleColor = isYdnaColorized
+                    ? YDNAColors
+                    : (targetSample ? distanceColors : '#78716c');
 
                 map.addLayer({
                     id: 'ancient-points',
@@ -96,10 +105,7 @@ export default function MapView({ data }: { data: any[] }) {
                         'circle-radius': 4,
                         'circle-stroke-width': 1,
                         'circle-stroke-color': '#fff',
-                        'circle-color': targetSample ? [
-                            'interpolate', ['linear'], ['get', 'distance'],
-                            0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
-                        ] : '#78716c',
+                        'circle-color': circleColor,
                     },
                 });
             }
@@ -112,6 +118,24 @@ export default function MapView({ data }: { data: any[] }) {
         };
     }, [activeTheme, geojsonData, targetSample]);
 
+
+    // Add this inside your MapView component
+    useEffect(() => {
+        const map = mapRef.current;
+
+        // Safety check: only run if map is ready and layer exists
+        if (!map || !map.isStyleLoaded() || !map.getLayer('ancient-points')) return;
+
+        // Logic for which color to apply
+        const circleColor = isYdnaColorized
+            ? YDNAColors
+            : (targetSample ? distanceColors : '#78716c');
+
+        // Manually tell Mapbox to update the paint property
+        map.setPaintProperty('ancient-points', 'circle-color', circleColor);
+        map.setPaintProperty('ancient-points', 'circle-stroke-width', 0);
+
+    }, [isYdnaColorized, targetSample, geojsonData])
 
 
     useEffect(() => {
@@ -239,6 +263,14 @@ export default function MapView({ data }: { data: any[] }) {
                 <h1 className="font-semibold text-sm">Kvali Engine</h1>
                 <p className="text-muted-foreground text-xs font-light">{data.length} samples loaded</p>
             </div> */}
+
+            <Button
+                className='absolute left-2 top-2'
+                variant={isYdnaColorized ? 'default' : 'outline'}
+                onClick={() => setIsYdnaColorized(!isYdnaColorized)} // Toggle instead of just true
+            >
+                Y-DNA Colorize
+            </Button>
 
             <DropdownMenu >
                 <DropdownMenuTrigger asChild className="w-fit h-fit absolute right-2 top-2">

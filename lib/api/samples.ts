@@ -20,7 +20,8 @@ export async function getMapSamples() {
                 Latitude, 
                 Longitude,
                 Simplified_Culture,
-                g25_string
+                g25_string,
+                "Y-Symbol"
             `)
             .not('g25_string', 'is', null)
 

@@ -74,3 +74,20 @@ export const runComparisonLogic = (targetId: string, allPoints: any[], targetG25
         };
     });
 };
+
+
+export const YDNAColors = [
+    'match',
+    ['get', 'Y-Symbol'],
+    'R1b', '#ef4444',
+    'R1a', '#3b82f6',
+    'I', '#10b981',
+    'J', '#8b5cf6',
+    'G', '#06b6d4',
+    '#78716c' // Fallback for everything else
+];
+
+export const distanceColors = [
+    'interpolate', ['linear'], ['get', 'distance'],
+    0, '#1d4ed8', 0.02, '#1d4ed8', 0.04, '#3b82f6', 0.08, '#93c5fd', 0.15, '#d6d3d1'
+];

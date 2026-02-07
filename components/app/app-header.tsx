@@ -38,10 +38,12 @@ import { Button } from '../ui/button'
 import { LargeSampleSearch } from './large-sample-search'
 import { useArchiveStore } from "@/store/use-map-store"
 import Link from 'next/link'
+import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
     const { setTargetSample } = useArchiveStore((state) => state);
+
 
     const resetTargetSample = () => {
         setTargetSample(null)
@@ -59,7 +61,8 @@ const AppHeader = ({ samples }: any) => {
                 <LargeSampleSearch samples={samples} />
             </section>
 
-            <section>
+            <section className='flex gap-2'>
+
                 <Button variant='secondary' onClick={() => { resetTargetSample() }}>Reset Map</Button>
             </section>
         </div>
