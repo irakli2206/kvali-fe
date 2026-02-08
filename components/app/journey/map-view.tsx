@@ -4,12 +4,12 @@ import React, { useEffect, useRef, useMemo, useState, JSX, ReactNode } from 'rea
 import { createPortal } from 'react-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-
+import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import { csvToGeoJSON, distanceColors, runComparisonLogic, YDNAColors } from '@/lib/map-utils'
 import { useArchiveStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
-import { ArrowLeftIcon, Clock, ClockFading, Cross, Dna, Grid2X2X, Link, List, LucideIcon, Map, Star, VenusAndMars, X } from 'lucide-react'
-import { Sample } from '@/types'
+import { ArrowLeftIcon, Clock, ClockFading, Cross, Dna, Grid2X2X, Link, List, LucideIcon, Map, Settings, Star, VenusAndMars, X } from 'lucide-react'
+import { MapMode, MapTheme, Sample } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import CoverageBadge from '@/components/shared/coverage-badge'
 import { calculateDistances } from '@/lib/g25-utils'
@@ -18,7 +18,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '@/components/ui/dropdown-menu'
+import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
@@ -33,12 +33,12 @@ const PING_HTML = `
 
 export default function MapView({ data }: { data: any[] }) {
     const [mapData, setMapData] = useState(data);
-    const { selectedSample, setSelectedSample, targetSample, setTargetSample } = useArchiveStore();
+    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode } = useArchiveStore();
 
     const [showMatchesList, setShowMatchesList] = useState<boolean>(false)
 
-    const [activeTheme, setActiveTheme] = useState<'Standard' | 'Light-V11' | 'Dark-V11'>('Light-V11')
-    const [isYdnaColorized, setIsYdnaColorized] = useState(false);
+    const [activeTheme, setActiveTheme] = useState<MapTheme>('Light-V11')
+    const isYdnaColorized = mapMode === 'ydna'
 
 
     // Refs for Mapbox instance management
@@ -68,6 +68,7 @@ export default function MapView({ data }: { data: any[] }) {
         const updated = runComparisonLogic(target.id, mapData, target.g25_string!);
         setTargetSample(target!)
         setMapData(updated);
+        setMapMode('distance');
         setShowMatchesList(true)
     };
 
@@ -119,23 +120,47 @@ export default function MapView({ data }: { data: any[] }) {
     }, [activeTheme, geojsonData, targetSample]);
 
 
-    // Add this inside your MapView component
     useEffect(() => {
         const map = mapRef.current;
+        if (!map || !geojsonData) return;
 
-        // Safety check: only run if map is ready and layer exists
-        if (!map || !map.isStyleLoaded() || !map.getLayer('ancient-points')) return;
+        // 1. Filter the data
+        let displayData = geojsonData as FeatureCollection<Geometry, GeoJsonProperties>
 
-        // Logic for which color to apply
-        const circleColor = isYdnaColorized
-            ? YDNAColors
-            : (targetSample ? distanceColors : '#78716c');
+        if (mapMode === 'ydna') {
+            displayData = {
+                ...geojsonData,
+                features: geojsonData.features.filter(feature => {
+                    const ydna = feature.properties?.['Y-Symbol'];
+                    // Clean check for strings and literal nulls
+                    return ydna &&
+                        ydna !== '' &&
+                        ydna !== 'null' &&
+                        ydna !== 'unknown' &&
+                        ydna !== 'N/A';
+                })
+            } as FeatureCollection<Geometry, GeoJsonProperties>; 
+        }
 
-        // Manually tell Mapbox to update the paint property
-        map.setPaintProperty('ancient-points', 'circle-color', circleColor);
-        map.setPaintProperty('ancient-points', 'circle-stroke-width', 0);
+        // 2. UPDATE THE CORRECT SOURCE NAME
+        // You named it 'ancient-samples' in your map.on('load')
+        const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
+        if (source) {
+            source.setData(displayData);
+        }
 
-    }, [isYdnaColorized, targetSample, geojsonData])
+        // 3. Update the colors and stroke
+        let color = (mapMode === 'ydna') ? YDNAColors :
+            (mapMode === 'distance' && targetSample) ? distanceColors :
+                '#78716c';
+
+        map.setPaintProperty('ancient-points', 'circle-color', color as mapboxgl.ExpressionSpecification);
+
+        // 4. FIX: If you're filtering data, everything currently in displayData should have a stroke.
+        // If you don't reset this, sometimes Mapbox retains the stroke of hidden points.
+        map.setPaintProperty('ancient-points', 'circle-stroke-opacity', 1);
+
+    }, [mapMode, targetSample, geojsonData]);
 
 
     useEffect(() => {
@@ -264,41 +289,41 @@ export default function MapView({ data }: { data: any[] }) {
                 <p className="text-muted-foreground text-xs font-light">{data.length} samples loaded</p>
             </div> */}
 
-            <Button
-                className='absolute left-2 top-2'
-                variant={isYdnaColorized ? 'default' : 'outline'}
-                onClick={() => setIsYdnaColorized(!isYdnaColorized)} // Toggle instead of just true
-            >
-                Y-DNA Colorize
-            </Button>
 
             <DropdownMenu >
                 <DropdownMenuTrigger asChild className="w-fit h-fit absolute right-2 top-2">
+                    <Button variant="outline">
+                        <Settings />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40">
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Map Mode</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup value={mapMode} onValueChange={(val) => { setMapMode(val as MapMode) }}>
+                            <DropdownMenuRadioItem value="neutral">Neutral</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="distances">Distances</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="ydna">Y-DNA</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu >
+                <DropdownMenuTrigger asChild className="w-fit h-fit absolute right-2 top-12">
                     <Button variant="outline">
                         <Map />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-40">
                     <DropdownMenuGroup>
-                        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
-                        <DropdownMenuCheckboxItem
-                            checked={activeTheme === 'Light-V11'}
-                            onCheckedChange={() => setActiveTheme('Light-V11')}
-                        >
-                            Light
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={activeTheme === 'Dark-V11'}
-                            onCheckedChange={() => setActiveTheme('Dark-V11')}
-                        >
-                            Dark
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={activeTheme === 'Standard'}
-                            onCheckedChange={() => setActiveTheme('Standard')}
-                        >
-                            Standard
-                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuLabel>Map Theme</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup value={activeTheme} onValueChange={(val) => { setActiveTheme(val as MapTheme) }}>
+                            <DropdownMenuRadioItem value="Light-V11">Light</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Dark-V11">Dark</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Standard">Standard</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>

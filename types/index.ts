@@ -7,3 +7,7 @@ export type SignupValues = z.infer<typeof signupSchema>
 export type SigninValues = z.infer<typeof signinSchema>
 
 export type Sample = Tables<'adna'>
+
+export type MapMode = 'neutral' | 'ydna' | 'distance'
+
+export type MapTheme = 'Standard' | 'Light-V11' | 'Dark-V11'

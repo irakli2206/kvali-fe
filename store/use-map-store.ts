@@ -1,4 +1,4 @@
-import { Sample } from '@/types';
+import { MapMode, Sample } from '@/types';
 import { create } from 'zustand'
 
 // Define the shape of your Sample based on your CSV keys
@@ -9,6 +9,8 @@ interface MapState {
     setSelectedSample: (sample: Sample | null) => void;
     targetSample: Sample | null;
     setTargetSample: (sample: Sample | null) => void;
+    mapMode: MapMode;
+    setMapMode: (mapMode: MapMode) => void;
 }
 
 export const useArchiveStore = create<MapState>((set) => ({
@@ -16,4 +18,6 @@ export const useArchiveStore = create<MapState>((set) => ({
     setSelectedSample: (sample) => set({ selectedSample: sample }),
     targetSample: null,
     setTargetSample: (sample) => set({ targetSample: sample }),
+    mapMode: 'neutral',
+    setMapMode: (mapMode) => set({ mapMode: mapMode }),
 }))
