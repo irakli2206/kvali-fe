@@ -6,7 +6,7 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import { csvToGeoJSON, distanceColors, runComparisonLogic, YDNAColors } from '@/lib/map-utils'
-import { useArchiveStore } from '@/store/use-map-store'
+import { useMapStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon, Clock, ClockFading, Cross, Dna, Grid2X2X, Link, List, LucideIcon, Map, Settings, Star, VenusAndMars, X } from 'lucide-react'
 import { MapMode, MapTheme, Sample } from '@/types'
@@ -19,6 +19,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import MapPopup from './popup'
+import { SliderControl } from '@base-ui/react'
+import TimeWindowController from './time-window-controller'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
@@ -33,7 +36,7 @@ const PING_HTML = `
 
 export default function MapView({ data }: { data: any[] }) {
     const [mapData, setMapData] = useState(data);
-    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode } = useArchiveStore();
+    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode, timeWindow } = useMapStore();
 
     const [showMatchesList, setShowMatchesList] = useState<boolean>(false)
 
@@ -124,43 +127,56 @@ export default function MapView({ data }: { data: any[] }) {
         const map = mapRef.current;
         if (!map || !geojsonData) return;
 
-        // 1. Filter the data
-        let displayData = geojsonData as FeatureCollection<Geometry, GeoJsonProperties>
+        // 1. Get the time window from your store (assuming useMapStore provides this)
+        // If your store uses a different name, just update 'timeWindow' here.
+        const [minYear, maxYear] = timeWindow || [-10000, 2026];
 
-        if (mapMode === 'ydna') {
-            displayData = {
-                ...geojsonData,
-                features: geojsonData.features.filter(feature => {
-                    const ydna = feature.properties?.['Y-Symbol'];
-                    // Clean check for strings and literal nulls
-                    return ydna &&
-                        ydna !== '' &&
-                        ydna !== 'null' &&
-                        ydna !== 'unknown' &&
-                        ydna !== 'N/A';
-                })
-            } as FeatureCollection<Geometry, GeoJsonProperties>; 
-        }
+        // 2. Filter the data based on BOTH mode and time
+        let filteredFeatures = geojsonData.features.filter(feature => {
+            const props = feature.properties;
+            if (!props) return false;
 
-        // 2. UPDATE THE CORRECT SOURCE NAME
-        // You named it 'ancient-samples' in your map.on('load')
+            // --- Temporal Filtering ---
+            // Parse 'Mean' safely. Since it's a string, parseFloat handles leading numbers.
+            const year = parseFloat(props.Mean);
+            const isWithinTime = !isNaN(year) && year >= minYear && year <= maxYear;
+
+            if (!isWithinTime) return false;
+
+            // --- Mode Specific Filtering ---
+            if (mapMode === 'ydna') {
+                const ydna = props['Y-Symbol'];
+                return ydna &&
+                    ydna !== '' &&
+                    ydna !== 'null' &&
+                    ydna !== 'unknown' &&
+                    ydna !== 'N/A';
+            }
+
+            return true;
+        });
+
+        const displayData = {
+            ...geojsonData,
+            features: filteredFeatures
+        } as FeatureCollection<Geometry, GeoJsonProperties>;
+
+        // 3. Update the Source
         const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
         if (source) {
             source.setData(displayData);
         }
 
-        // 3. Update the colors and stroke
+        // 4. Update the Colors
         let color = (mapMode === 'ydna') ? YDNAColors :
             (mapMode === 'distance' && targetSample) ? distanceColors :
                 '#78716c';
 
         map.setPaintProperty('ancient-points', 'circle-color', color as mapboxgl.ExpressionSpecification);
-
-        // 4. FIX: If you're filtering data, everything currently in displayData should have a stroke.
-        // If you don't reset this, sometimes Mapbox retains the stroke of hidden points.
         map.setPaintProperty('ancient-points', 'circle-stroke-opacity', 1);
 
-    }, [mapMode, targetSample, geojsonData]);
+        // Dependency array: make sure to add timeWindow here!
+    }, [mapMode, targetSample, geojsonData, timeWindow]);
 
 
     useEffect(() => {
@@ -281,7 +297,7 @@ export default function MapView({ data }: { data: any[] }) {
     console.log('geojsonData', geojsonData)
 
     return (
-        <div className="relative w-full h-screen bg-[#f8f8f8]">
+        <div className="relative w-full h-full bg-[#f8f8f8] overflow-hidden">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
             {/* <div className="bg-white/30 backdrop-blur border rounded-sm w-fit h-20 absolute inset-2 p-2">
@@ -358,7 +374,12 @@ export default function MapView({ data }: { data: any[] }) {
                     </div>
                 </div>
             } */}
+            {
 
+                <div className='absolute bottom-4 w-full'>
+                    <TimeWindowController />
+                </div>
+            }
 
             {popupContainer && selectedSample && createPortal(
                 <MapPopup
@@ -371,161 +392,52 @@ export default function MapView({ data }: { data: any[] }) {
     );
 }
 
-const PopupSkeleton = () => (
-    <div className="w-md rounded-md min-h-[300px] bg-white border p-4 space-y-4">
-        <div className="space-y-2">
-            <Skeleton className="h-6 w-[200px]" /> {/* Title */}
-            <Skeleton className="h-4 w-[150px]" /> {/* Location */}
-        </div>
-        <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex gap-2">
-                    <Skeleton className="h-4 w-4 rounded-full" />
-                    <Skeleton className="h-4 flex-1" />
-                </div>
-            ))}
-        </div>
-        <Skeleton className="h-10 w-full mt-4" /> {/* Button */}
-    </div>
-)
-
-// --- Sub-Component: Popup ---
-function MapPopup({ sample, handleCalculateDists }: { sample: Sample, handleCalculateDists: (sample: Sample) => void }) {
-    // isLoading and data are managed for you
-    const { data, isLoading } = useQuery({
-        queryKey: ['sample', sample.id],
-        queryFn: () => getSampleDetails(sample.id).then(res => res.data),
-        // This prevents the UI from flickering if you click the same dot twice
-        staleTime: 1000 * 60 * 5,
-    })
-
-    if (isLoading) return <PopupSkeleton />
-    if (!data) return null
 
 
-    if (!data) return <></>
 
-    const dateNum = Number(data.Mean)
-    const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
-    const content = getPopupContent(data)
+
+const YDNALegend = ({ onClose }: { onClose: () => void }) => {
+    // This should match the colors we defined in your YDNAColors array
+    const legendItems = [
+        { label: 'R1b', color: '#ef4444', desc: 'Western Europe' },
+        { label: 'R1a', color: '#3b82f6', desc: 'Eastern Europe/Central Asia' },
+        { label: 'I', color: '#10b981', desc: 'European Hunter-Gatherer' },
+        { label: 'J', color: '#8b5cf6', desc: 'Near Eastern/Caucasian' },
+        { label: 'G', color: '#06b6d4', desc: 'Early Anatolian Farmers' },
+        { label: 'E', color: '#78350f', desc: 'African/Mediterranean' },
+        { label: 'N', color: '#84cc16', desc: 'Uralic/Siberian' },
+        { label: 'Q', color: '#f43f5e', desc: 'Siberian/Amerindian' },
+    ];
 
     return (
-        <div className="w-md min-h-[300px] bg-white border rounded-md drop-shadow-xs flex flex-col">
-            <header className='flex w-full   p-1 items-center justify-between border-b'>
-                <Button variant="ghost" size="icon-sm">
-                    <X className='' />
+        <div className="absolute bottom-6 right-2 w-64 bg-white/90 backdrop-blur-md border border-stone-200 rounded-lg shadow-xl p-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Dna className="w-4 h-4 text-primary" />
+                    Y-DNA Haplogroups
+                </h3>
+                <Button variant="ghost" size="icon-sm" onClick={onClose}>
+                    <X className="w-3 h-3" />
                 </Button>
-                <div className="flex ">
-                    <Button variant="ghost" size="icon-sm">
-                        <Star className='w-4' />
-                    </Button>
-                </div>
-            </header>
-
-            <main className="flex flex-col p-4 gap-4">
-                <div className="">
-                    <h6 className="font-medium text-lg">{data['Simplified_Culture']} ({data['Object-ID']})</h6>
-                    <span className='text-muted-foreground'>{data.Location}, {data.Country}</span>
-                </div>
-                <dl className='flex flex-col gap-1'>
-                    {
-                        content.map(r => <MapPopupRow key={r.label} {...r} />)
-                    }
-                </dl>
-
-                <aside className="flex flex-col gap-2 ">
-                    {data['Kinship-Notes'] &&
-                        <div className='px-3 py-2 bg-muted rounded-sm'>
-                            <p className='mb-0 '>Additional Information</p>
-                            <p className="text-muted-foreground text-xs">{data['Kinship-Notes']}</p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                {legendItems.map((item) => (
+                    <div key={item.label} className="flex items-center gap-3">
+                        <div
+                            className="w-3 h-3 rounded-full shrink-0 border border-black/10"
+                            style={{ backgroundColor: item.color }}
+                        />
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold leading-none">{item.label}</span>
+                            <span className="text-[10px] text-muted-foreground leading-tight">{item.desc}</span>
                         </div>
-                    }
-                </aside>
-            </main>
-
-            <footer className="flex flex-col gap-2 p-4 pt-0">
-                <Button variant='secondary' onClick={() => handleCalculateDists(data)} >Calculate Distances</Button>
-            </footer>
-
+                    </div>
+                ))}
+                <div className="flex items-center gap-3 pt-1 border-t mt-1">
+                    <div className="w-3 h-3 rounded-full shrink-0 bg-[#e7e5e4] border border-black/10" />
+                    <span className="text-xs text-muted-foreground">Other / Macro groups</span>
+                </div>
+            </div>
         </div>
     );
-}
-
-
-
-type MapPopupRowProps = {
-    icon: LucideIcon
-    label: string
-    value: ReactNode | string
-}
-
-export const MapPopupRow = ({ icon: Icon, label, value }: MapPopupRowProps) => {
-    // Determine if the value is truly empty
-    const displayValue = (value === null || value === undefined || value === "")
-        ? <span className="text-muted-foreground/50 italic">N/A</span>
-        : value;
-
-    return (
-        <div className='flex items-start gap-2'>
-            <dt className="flex-1 flex gap-2 items-center text-muted-foreground">
-                <Icon className="w-3 h-3 text-zinc-400 stroke-[2.5px]" />
-                <span className="font-medium">{label}</span>
-            </dt>
-            <dd className="flex-1">
-                {displayValue}
-            </dd>
-        </div>
-    )
-}
-
-
-
-const getPopupContent = (data: Sample) => {
-    const dateNum = Number(data.Mean)
-    const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
-
-    return [
-        {
-            icon: Clock,
-            label: 'Date',
-            value: parsedDate
-        },
-        {
-            icon: ClockFading,
-            label: 'Dating Method',
-            value: data['Method-Date']
-        },
-        {
-            icon: VenusAndMars,
-            label: 'Sex',
-            value: data.Sex
-        },
-        {
-            icon: Dna,
-            label: 'Y-DNA',
-            // If data.YFull is missing, value becomes null, triggering N/A
-            value: data.YFull ? (
-                <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
-                    {data.YFull} <Link className='w-2.5' />
-                </a>
-            ) : null
-        },
-        {
-            icon: Dna,
-            label: 'mtDNA',
-            value: data.mtree ? (
-                <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
-                    {data.mtree} <Link className='w-2.5' />
-                </a>
-            ) : null
-        },
-        {
-            icon: Grid2X2X,
-            label: 'Autosomal Coverage',
-            // Ensure coverage isn't an empty string/null
-            value: data['Autosomal-Coverage'] ? (
-                <CoverageBadge coverage={data['Autosomal-Coverage']} />
-            ) : null
-        },
-    ]
-}
+};

@@ -39,11 +39,14 @@ export default function AppLayout({
     return (
         <QueryClientProvider client={queryClient}>
             {/* 1. Add 'flex flex-col' to stack the header and card vertically */}
-            <main className="w-full h-screen bg-white p-4 flex flex-col gap-4 overflow-hidden">
+            <main className="w-full h-[100dvh] bg-white p-4 flex flex-col gap-4 overflow-hidden">
 
+                {/* Header stays its natural height */}
                 <AppHeader samples={mapData} />
 
-                {/* 2. Change 'h-full' to 'flex-1' so it grows to fill the remaining space */}
+                {/* flex-1 tells this div to take up 100% of the REMAINING space.
+   Because the parent is exactly 100dvh, this div cannot bleed out.
+*/}
                 <div className="relative flex-1 w-full bg-white rounded-md drop-shadow-xs border border-zinc-200 overflow-hidden">
                     {children}
                 </div>

@@ -11,13 +11,17 @@ interface MapState {
     setTargetSample: (sample: Sample | null) => void;
     mapMode: MapMode;
     setMapMode: (mapMode: MapMode) => void;
+    timeWindow: [number, number]
+    setTimeWindow: (timeWindow: [number, number]) => void
 }
 
-export const useArchiveStore = create<MapState>((set) => ({
+export const useMapStore = create<MapState>((set) => ({
     selectedSample: null,
     setSelectedSample: (sample) => set({ selectedSample: sample }),
     targetSample: null,
     setTargetSample: (sample) => set({ targetSample: sample }),
     mapMode: 'neutral',
     setMapMode: (mapMode) => set({ mapMode: mapMode }),
+    timeWindow: [-50000, 2000],
+    setTimeWindow: (timeWindow) => set({ timeWindow: timeWindow }),
 }))

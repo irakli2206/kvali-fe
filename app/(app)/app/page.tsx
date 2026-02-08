@@ -1,4 +1,4 @@
-import MapView from '@/components/app/journey/map-view'
+import MapView from '@/components/app/map/map-view'
 import { getMapSamples } from '@/lib/api/samples'
 import { createClient } from '@/lib/supabase/server'
 import React from 'react'

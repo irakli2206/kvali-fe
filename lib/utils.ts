@@ -4,3 +4,14 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+
+export const formatYear = (year: number) => {
+  const absYear = Math.abs(year);
+  // Use 'de-DE' for space separators (20 000) or 'en-US' for commas (20,000)
+  const formatted = new Intl.NumberFormat('de-DE').format(absYear);
+
+  if (year < 0) return `${formatted} BCE`;
+  if (year === 0) return `0`;
+  return `${formatted} CE`;
+};

@@ -18,7 +18,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { useArchiveStore } from "@/store/use-map-store"
+import { useMapStore } from "@/store/use-map-store"
 import { getSampleDetails } from "@/lib/api/samples"
 
 interface Sample {
@@ -31,7 +31,7 @@ export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
     const [open, setOpen] = React.useState(false)
     const [search, setSearch] = React.useState("")
 
-    const { selectedSample, setSelectedSample } = useArchiveStore((state) => state)
+    const { selectedSample, setSelectedSample } = useMapStore((state) => state)
 
 
     // 1. Guard against undefined samples during filtering

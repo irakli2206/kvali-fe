@@ -36,13 +36,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandEmpty, CommandList, CommandItem } from "@/components/ui/command"
 import { Button } from '../ui/button'
 import { LargeSampleSearch } from './large-sample-search'
-import { useArchiveStore } from "@/store/use-map-store"
+import { useMapStore } from "@/store/use-map-store"
 import Link from 'next/link'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
-    const { setTargetSample } = useArchiveStore((state) => state);
+    const { setTargetSample } = useMapStore((state) => state);
 
 
     const resetTargetSample = () => {
