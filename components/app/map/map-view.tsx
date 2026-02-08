@@ -22,6 +22,8 @@ import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMe
 import MapPopup from './popup'
 import { SliderControl } from '@base-ui/react'
 import TimeWindowController from './time-window-controller'
+import YDNALegend from './ydna-legend'
+import { YDNAFilter } from './ydna-filter'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaXJha2xpMjIwNiIsImEiOiJja3dkZzl3dDgwa2FyMnBwbjEybjd0dmxpIn0.-XNJzlRbWG0zH2Q1MRpmOA';
 
@@ -31,12 +33,12 @@ const parseCoords = (val: string | number) =>
 
 const PING_HTML = `
     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-stone-500 opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-3 w-3 bg-stone-900 border-2 border-white"></span>
+    <span class="relative inline-flex rounded-full h-3 w-3  border-2 border-white"></span>
 `;
 
 export default function MapView({ data }: { data: any[] }) {
     const [mapData, setMapData] = useState(data);
-    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode, timeWindow } = useMapStore();
+    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode, timeWindow, selectedYDNA } = useMapStore();
 
     const [showMatchesList, setShowMatchesList] = useState<boolean>(false)
 
@@ -127,30 +129,33 @@ export default function MapView({ data }: { data: any[] }) {
         const map = mapRef.current;
         if (!map || !geojsonData) return;
 
-        // 1. Get the time window from your store (assuming useMapStore provides this)
-        // If your store uses a different name, just update 'timeWindow' here.
+        // 1. Get both the Time and Y-DNA selection from the store
         const [minYear, maxYear] = timeWindow || [-10000, 2026];
+        // Assuming you added selectedYDNA to your useMapStore
+        const { selectedYDNA } = useMapStore.getState();
 
-        // 2. Filter the data based on BOTH mode and time
+        // 2. Filter the data
         let filteredFeatures = geojsonData.features.filter(feature => {
             const props = feature.properties;
             if (!props) return false;
 
-            // --- Temporal Filtering ---
-            // Parse 'Mean' safely. Since it's a string, parseFloat handles leading numbers.
+            // --- Temporal Filter ---
             const year = parseFloat(props.Mean);
             const isWithinTime = !isNaN(year) && year >= minYear && year <= maxYear;
-
             if (!isWithinTime) return false;
 
-            // --- Mode Specific Filtering ---
+            // --- Y-DNA Filter (The new part) ---
             if (mapMode === 'ydna') {
-                const ydna = props['Y-Symbol'];
-                return ydna &&
-                    ydna !== '' &&
-                    ydna !== 'null' &&
-                    ydna !== 'unknown' &&
-                    ydna !== 'N/A';
+                const sampleY = props['Y-Symbol'];
+
+                // If user hasn't selected any specific groups, show all valid ones
+                if (!selectedYDNA || selectedYDNA.length === 0) {
+                    return sampleY && !['null', 'unknown', 'N/A', ''].includes(sampleY);
+                }
+
+                // If user has selected groups, check if this sample starts with any of them
+                // Using .startsWith handles sub-clades (e.g., selecting "R1b" shows "R1b1a")
+                return selectedYDNA.some(group => sampleY?.startsWith(group));
             }
 
             return true;
@@ -161,13 +166,13 @@ export default function MapView({ data }: { data: any[] }) {
             features: filteredFeatures
         } as FeatureCollection<Geometry, GeoJsonProperties>;
 
-        // 3. Update the Source
+        // 3. Update Mapbox Source
         const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
         if (source) {
             source.setData(displayData);
         }
 
-        // 4. Update the Colors
+        // 4. Update Colors
         let color = (mapMode === 'ydna') ? YDNAColors :
             (mapMode === 'distance' && targetSample) ? distanceColors :
                 '#78716c';
@@ -175,8 +180,8 @@ export default function MapView({ data }: { data: any[] }) {
         map.setPaintProperty('ancient-points', 'circle-color', color as mapboxgl.ExpressionSpecification);
         map.setPaintProperty('ancient-points', 'circle-stroke-opacity', 1);
 
-        // Dependency array: make sure to add timeWindow here!
-    }, [mapMode, targetSample, geojsonData, timeWindow]);
+        // IMPORTANT: Add selectedYDNA to the dependencies so the map re-renders on change
+    }, [mapMode, targetSample, geojsonData, timeWindow, selectedYDNA]);
 
 
     useEffect(() => {
@@ -250,26 +255,21 @@ export default function MapView({ data }: { data: any[] }) {
         };
     }, []);
 
-    // --- Effect: React to Selection (Zustand) ---
     useEffect(() => {
-        if (!selectedSample || !mapRef.current) return;
+        if (!selectedSample || !mapRef.current) return
 
         const lat = parseCoords(selectedSample["Latitude"]);
         const lng = parseCoords(selectedSample["Longitude"]);
         if (isNaN(lat) || isNaN(lng)) return;
 
-        // 1. Handle Ping Marker
         if (pingRef.current) pingRef.current.remove();
         const el = document.createElement('div');
         el.className = 'relative flex h-8 w-8 items-center justify-center';
         el.innerHTML = PING_HTML;
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(mapRef.current);
 
-        // 2. Handle Flying
         mapRef.current.flyTo({ center: [lng, lat - 1], zoom: 5, essential: true });
 
-        // 3. FORCE POPUP OPEN (The change you needed)
-        // Clear existing popup if any
         if (popupRef.current) popupRef.current.remove();
 
         const container = document.createElement('div');
@@ -282,12 +282,14 @@ export default function MapView({ data }: { data: any[] }) {
 
         popupRef.current = popup;
 
-        // Optional: Reset popupContainer when popup is closed via Mapbox X or similar
-        popup.on('close', () => setPopupContainer(null));
+        popup.on('close', () => {
+            setPopupContainer(null)
+            pingRef.current.remove();
+
+        });
 
     }, [selectedSample]);
 
-    console.log('sel', selectedSample)
 
     const closePopup = () => {
         if (popupRef.current) popupRef.current.remove();
@@ -374,12 +376,18 @@ export default function MapView({ data }: { data: any[] }) {
                     </div>
                 </div>
             } */}
-            {
 
-                <div className='absolute bottom-4 w-full'>
-                    <TimeWindowController />
-                </div>
-            }
+
+            {/* <YDNALegend onClose={() => { }} /> */}
+            <div className='absolute top-2 left-2 w-fit'>
+                <YDNAFilter />
+            </div>
+
+
+            <div className='absolute bottom-4 w-full'>
+                <TimeWindowController />
+            </div>
+
 
             {popupContainer && selectedSample && createPortal(
                 <MapPopup
@@ -396,48 +404,3 @@ export default function MapView({ data }: { data: any[] }) {
 
 
 
-const YDNALegend = ({ onClose }: { onClose: () => void }) => {
-    // This should match the colors we defined in your YDNAColors array
-    const legendItems = [
-        { label: 'R1b', color: '#ef4444', desc: 'Western Europe' },
-        { label: 'R1a', color: '#3b82f6', desc: 'Eastern Europe/Central Asia' },
-        { label: 'I', color: '#10b981', desc: 'European Hunter-Gatherer' },
-        { label: 'J', color: '#8b5cf6', desc: 'Near Eastern/Caucasian' },
-        { label: 'G', color: '#06b6d4', desc: 'Early Anatolian Farmers' },
-        { label: 'E', color: '#78350f', desc: 'African/Mediterranean' },
-        { label: 'N', color: '#84cc16', desc: 'Uralic/Siberian' },
-        { label: 'Q', color: '#f43f5e', desc: 'Siberian/Amerindian' },
-    ];
-
-    return (
-        <div className="absolute bottom-6 right-2 w-64 bg-white/90 backdrop-blur-md border border-stone-200 rounded-lg shadow-xl p-4 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-between mb-3 border-b pb-2">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <Dna className="w-4 h-4 text-primary" />
-                    Y-DNA Haplogroups
-                </h3>
-                <Button variant="ghost" size="icon-sm" onClick={onClose}>
-                    <X className="w-3 h-3" />
-                </Button>
-            </div>
-            <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                {legendItems.map((item) => (
-                    <div key={item.label} className="flex items-center gap-3">
-                        <div
-                            className="w-3 h-3 rounded-full shrink-0 border border-black/10"
-                            style={{ backgroundColor: item.color }}
-                        />
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold leading-none">{item.label}</span>
-                            <span className="text-[10px] text-muted-foreground leading-tight">{item.desc}</span>
-                        </div>
-                    </div>
-                ))}
-                <div className="flex items-center gap-3 pt-1 border-t mt-1">
-                    <div className="w-3 h-3 rounded-full shrink-0 bg-[#e7e5e4] border border-black/10" />
-                    <span className="text-xs text-muted-foreground">Other / Macro groups</span>
-                </div>
-            </div>
-        </div>
-    );
-};

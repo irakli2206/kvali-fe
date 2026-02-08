@@ -13,6 +13,8 @@ interface MapState {
     setMapMode: (mapMode: MapMode) => void;
     timeWindow: [number, number]
     setTimeWindow: (timeWindow: [number, number]) => void
+    selectedYDNA: string[],
+    setSelectedYDNA: (groups: string[]) => void,
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -24,4 +26,6 @@ export const useMapStore = create<MapState>((set) => ({
     setMapMode: (mapMode) => set({ mapMode: mapMode }),
     timeWindow: [-50000, 2000],
     setTimeWindow: (timeWindow) => set({ timeWindow: timeWindow }),
+    selectedYDNA: [],
+    setSelectedYDNA: (ydna) => set({ selectedYDNA: ydna }),
 }))
