@@ -40,6 +40,7 @@ import { useMapStore } from "@/store/use-map-store"
 import Link from 'next/link'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
 import { CultureSearch } from './map/culture-search'
+import { signout } from '@/app/(auth)/actions'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
@@ -69,8 +70,8 @@ const AppHeader = ({ samples }: any) => {
             </section>
 
             <section className='flex gap-2'>
-
                 <Button variant='secondary' onClick={() => { resetMap() }}>Reset Map</Button>
+                <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button>
             </section>
         </div>
     )
