@@ -57,9 +57,9 @@ export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
                 <Button
                     variant="outline"
                     role="combobox"
-                    className="w-[300px] justify-between font-normal"
+                    className="w-[300px] justify-between font-normal "
                 >
-                    {selectedSample ? selectedSample["Object-ID"] : "Select genetic sample..."}
+                    {selectedSample ? selectedSample["Object-ID"] : <span className="text-muted-foreground">Select genetic sample</span> }
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>

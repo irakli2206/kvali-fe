@@ -68,7 +68,7 @@ export function CultureSearch({ samples = [] }: { samples: Sample[] }) {
                     role="combobox"
                     className="w-[300px] justify-between font-normal"
                 >
-                    {selectedCulture ? selectedCulture : "Select culture..."}
+                    {selectedCulture ? selectedCulture : <span className="text-muted-foreground">Select culture</span>}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>

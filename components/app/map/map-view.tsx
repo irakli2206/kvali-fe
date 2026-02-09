@@ -17,6 +17,7 @@ import { useMapInstance } from '@/hooks/use-map-instance'
 import { useMapData } from '@/hooks/use-map-data'
 import { useMapMarkers } from '@/hooks/use-map-markers'
 import { useMapSync } from '@/hooks/use-map-sync'
+import { DistanceLegend } from './distances-legend'
 
 export default function MapView({ data }: { data: any[] }) {
     const { mapRef, mapContainerRef, activeTheme, setActiveTheme } = useMapInstance();
@@ -45,6 +46,8 @@ export default function MapView({ data }: { data: any[] }) {
     return (
         <div className="relative w-full h-full bg-[#f8f8f8] overflow-hidden">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+            <DistanceLegend />
 
             <div className="absolute right-2 top-2 flex flex-col gap-2">
                 <DropdownMenu>
