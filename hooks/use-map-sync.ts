@@ -52,7 +52,9 @@ export function useMapSync({
             // 3. Handle Dynamic Styling (Colors)
             const color = selectedCulture
                 ? ['case', ['==', ['get', 'Simplified_Culture'], selectedCulture], '#3b82f6', '#d1d5db']
-                : (mapMode === 'ydna' ? YDNAColors : (mapMode === 'distance' && targetSample ? distanceColors : '#78716c'));
+                : (mapMode === 'distance' && targetSample)
+                    ? distanceColors
+                    : (mapMode === 'ydna' ? YDNAColors : '#78716c');
 
             map.setPaintProperty('ancient-points', 'circle-color', color);
         };

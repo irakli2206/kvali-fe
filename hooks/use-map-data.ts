@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react'; // Added useEffect
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils';
 import { useMapStore } from '@/store/use-map-store';
@@ -12,8 +12,20 @@ export function useMapData(initialData: any[]) {
         setMapMode,
         selectedYDNA,
         targetSample,
-        setTargetSample
+        setTargetSample,
+        selectedCulture,   // Pull this from store
+        setSelectedCulture
     } = useMapStore();
+
+    // Fix: When a culture is picked, kill the distance mode/target
+    useEffect(() => {
+        if (selectedCulture && mapMode === 'distance') {
+            setMapMode('neutral');
+            setTargetSample(null);
+            // Optionally reset data if distances were calculated
+            setMapData(initialData);
+        }
+    }, [selectedCulture, setMapMode, setTargetSample, initialData]);
 
     const geojsonData = useMemo(() => {
         const baseGeoJSON = csvToGeoJSON(mapData);
@@ -45,6 +57,7 @@ export function useMapData(initialData: any[]) {
 
     const handleCalculateDists = (target: Sample) => {
         const updated = runComparisonLogic(target.id, mapData, target.g25_string!);
+        setSelectedCulture(null); // Clear culture highlight when calculating
         setTargetSample(target);
         setMapData(updated);
         setMapMode('distance');
@@ -53,6 +66,7 @@ export function useMapData(initialData: any[]) {
     const resetData = () => {
         setMapData(initialData);
         setTargetSample(null);
+        setSelectedCulture(null);
         setMapMode('neutral');
     };
 
@@ -60,6 +74,6 @@ export function useMapData(initialData: any[]) {
         geojsonData,
         handleCalculateDists,
         resetData,
-        mapData // Exporting this in case you need raw counts elsewhere
+        mapData 
     };
 }
