@@ -38,7 +38,7 @@ const PING_HTML = `
 
 export default function MapView({ data }: { data: any[] }) {
     const [mapData, setMapData] = useState(data);
-    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode, timeWindow, selectedYDNA } = useMapStore();
+    const { selectedSample, setSelectedSample, targetSample, setTargetSample, mapMode, setMapMode, timeWindow, selectedYDNA, selectedCulture } = useMapStore();
 
     const [showMatchesList, setShowMatchesList] = useState<boolean>(false)
 
@@ -55,7 +55,42 @@ export default function MapView({ data }: { data: any[] }) {
 
 
 
-    const geojsonData = useMemo(() => csvToGeoJSON(mapData), [mapData]);
+    const geojsonData = useMemo(() => {
+        // 1. Convert the current mapData (which contains distances if calculated) to GeoJSON
+        const baseGeoJSON = csvToGeoJSON(mapData);
+        const [minYear, maxYear] = timeWindow || [-10000, 2026];
+
+        // 2. Apply the filters here so the map ALWAYS receives the correct subset
+        const filteredFeatures = baseGeoJSON.features.filter(feature => {
+            const props = feature.properties;
+            if (!props) return false;
+
+            // Time Filter
+            const year = parseFloat(props.Mean);
+            const isWithinTime = !isNaN(year) && year >= minYear && year <= maxYear;
+            const isTarget = targetSample && props.id === targetSample.id;
+            if (!isWithinTime && !isTarget) return false;
+
+            // Y-DNA Filter
+            if (mapMode === 'ydna') {
+                const sampleY = props['Y-Symbol'];
+                const isValidY = sampleY && !['null', 'unknown', 'N/A', '', 'None'].includes(sampleY);
+                if (!isValidY) return false;
+                if (selectedYDNA?.length > 0) {
+                    return selectedYDNA.some(group => sampleY?.startsWith(group));
+                }
+            }
+
+            return true;
+        });
+
+        return {
+            ...baseGeoJSON,
+            features: filteredFeatures
+        } as FeatureCollection<Geometry, GeoJsonProperties>;
+    }, [mapData, timeWindow, mapMode, selectedYDNA, targetSample]);
+
+
     const nearestMatches = useMemo(() => {
         if (!targetSample) return [];
 
@@ -129,33 +164,33 @@ export default function MapView({ data }: { data: any[] }) {
         const map = mapRef.current;
         if (!map || !geojsonData) return;
 
-        // 1. Get both the Time and Y-DNA selection from the store
         const [minYear, maxYear] = timeWindow || [-10000, 2026];
-        // Assuming you added selectedYDNA to your useMapStore
-        const { selectedYDNA } = useMapStore.getState();
+        const { selectedYDNA, selectedCulture, mapMode, targetSample } = useMapStore.getState();
 
-        // 2. Filter the data
+        // --- 1. DATA FILTERING ---
         let filteredFeatures = geojsonData.features.filter(feature => {
             const props = feature.properties;
             if (!props) return false;
 
-            // --- Temporal Filter ---
+            // A. Time Filter (This is the "gatekeeper" for ALL modes)
             const year = parseFloat(props.Mean);
             const isWithinTime = !isNaN(year) && year >= minYear && year <= maxYear;
-            if (!isWithinTime) return false;
 
-            // --- Y-DNA Filter (The new part) ---
+            // Allow the target sample to stay visible even if time slider moves past it
+            const isTarget = targetSample && props.id === targetSample.id;
+
+            if (!isWithinTime && !isTarget) return false;
+
+            // B. Y-DNA Mode specific filtering (Removes females/non-matches)
             if (mapMode === 'ydna') {
                 const sampleY = props['Y-Symbol'];
+                const isValidY = sampleY && !['null', 'unknown', 'N/A', '', 'None'].includes(sampleY);
 
-                // If user hasn't selected any specific groups, show all valid ones
-                if (!selectedYDNA || selectedYDNA.length === 0) {
-                    return sampleY && !['null', 'unknown', 'N/A', ''].includes(sampleY);
+                if (!isValidY) return false;
+
+                if (selectedYDNA && selectedYDNA.length > 0) {
+                    return selectedYDNA.some(group => sampleY?.startsWith(group));
                 }
-
-                // If user has selected groups, check if this sample starts with any of them
-                // Using .startsWith handles sub-clades (e.g., selecting "R1b" shows "R1b1a")
-                return selectedYDNA.some(group => sampleY?.startsWith(group));
             }
 
             return true;
@@ -166,22 +201,31 @@ export default function MapView({ data }: { data: any[] }) {
             features: filteredFeatures
         } as FeatureCollection<Geometry, GeoJsonProperties>;
 
-        // 3. Update Mapbox Source
         const source = map.getSource('ancient-samples') as mapboxgl.GeoJSONSource;
         if (source) {
             source.setData(displayData);
         }
 
-        // 4. Update Colors
-        let color = (mapMode === 'ydna') ? YDNAColors :
-            (mapMode === 'distance' && targetSample) ? distanceColors :
-                '#78716c';
+        // --- 2. COLOR LOGIC ---
+        let color: any;
+        if (selectedCulture) {
+            // Highlighting a culture
+            color = [
+                'case',
+                ['==', ['get', 'Simplified_Culture'], selectedCulture],
+                '#3b82f6',
+                '#d1d5db'
+            ];
+        } else {
+            // Standard coloring modes
+            color = (mapMode === 'ydna') ? YDNAColors :
+                (mapMode === 'distance' && targetSample) ? distanceColors :
+                    '#78716c';
+        }
 
-        map.setPaintProperty('ancient-points', 'circle-color', color as mapboxgl.ExpressionSpecification);
-        map.setPaintProperty('ancient-points', 'circle-stroke-opacity', 1);
+        map.setPaintProperty('ancient-points', 'circle-color', color);
 
-        // IMPORTANT: Add selectedYDNA to the dependencies so the map re-renders on change
-    }, [mapMode, targetSample, geojsonData, timeWindow, selectedYDNA]);
+    }, [mapMode, targetSample, geojsonData, timeWindow, selectedYDNA, selectedCulture]);
 
 
     useEffect(() => {
@@ -290,6 +334,35 @@ export default function MapView({ data }: { data: any[] }) {
 
     }, [selectedSample]);
 
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map || !selectedCulture || !data) return;
+
+        // 1. Find all samples for this culture
+        const cultureSamples = data.filter(s => s.Simplified_Culture === selectedCulture);
+        if (cultureSamples.length === 0) return;
+
+        // 2. Create the bounding box
+        const bounds = new mapboxgl.LngLatBounds();
+
+        cultureSamples.forEach(s => {
+            const ln = typeof s.Longitude === 'string' ? parseFloat(s.Longitude.replace(',', '.')) : s.Longitude;
+            const lt = typeof s.Latitude === 'string' ? parseFloat(s.Latitude.replace(',', '.')) : s.Latitude;
+
+            if (!isNaN(ln) && !isNaN(lt)) {
+                bounds.extend([ln, lt]);
+            }
+        });
+
+        // 3. Fly the map to fit those bounds
+        map.fitBounds(bounds, {
+            padding: 100, // Keeps dots from hitting the edges of the screen
+            maxZoom: 7,   // Prevents zooming in too deep on a single point
+            duration: 1500
+        });
+
+    }, [selectedCulture, data]); // Only runs when culture changes
+
 
     const closePopup = () => {
         if (popupRef.current) popupRef.current.remove();
@@ -317,9 +390,21 @@ export default function MapView({ data }: { data: any[] }) {
                 <DropdownMenuContent className="w-40">
                     <DropdownMenuGroup>
                         <DropdownMenuLabel>Map Mode</DropdownMenuLabel>
-                        <DropdownMenuRadioGroup value={mapMode} onValueChange={(val) => { setMapMode(val as MapMode) }}>
+                        <DropdownMenuRadioGroup
+                            value={mapMode}
+                            onValueChange={(val) => {
+                                const mode = val as MapMode;
+                                setMapMode(mode);
+
+                                // If the user goes back to neutral, reset the map data to the original set
+                                if (mode === 'neutral') {
+                                    setMapData(data); // 'data' is the original prop passed to MapView
+                                    setTargetSample(null); // Clear the target reference
+                                }
+                            }}
+                        >
                             <DropdownMenuRadioItem value="neutral">Neutral</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="distances">Distances</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="distance">Distances</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="ydna">Y-DNA</DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
 
@@ -379,9 +464,9 @@ export default function MapView({ data }: { data: any[] }) {
 
 
             {/* <YDNALegend onClose={() => { }} /> */}
-            <div className='absolute top-2 left-2 w-fit'>
+            {isYdnaColorized && <div className='absolute top-2 left-2 w-fit'>
                 <YDNAFilter />
-            </div>
+            </div>}
 
 
             <div className='absolute bottom-4 w-full'>

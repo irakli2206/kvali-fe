@@ -1,6 +1,23 @@
 // lib/map-utils.ts
 
 import { parseG25 } from "./g25-utils";
+import mapboxgl from 'mapbox-gl';
+
+export const getCultureBounds = (cultureName: string, allSamples: any[]) => {
+    const cultureSamples = allSamples.filter(s => s.Simplified_Culture === cultureName);
+    if (cultureSamples.length === 0) return null;
+
+    const bounds = new mapboxgl.LngLatBounds();
+    cultureSamples.forEach(s => {
+        const ln = parseFloat(s.Longitude?.toString().replace(',', '.'));
+        const lt = parseFloat(s.Latitude?.toString().replace(',', '.'));
+        if (!isNaN(ln) && !isNaN(lt)) {
+            bounds.extend([ln, lt]);
+        }
+    });
+    return bounds;
+};
+
 
 export function csvToGeoJSON(rows: any[]) {
     if (!rows || rows.length === 0) {
@@ -157,3 +174,21 @@ export type YDNAHaplogroup =
     | 'S'
     | 'T'
     | 'Z';
+
+
+
+
+
+
+
+export const getUniqueCultures = (data: any[]) => {
+    if (!data || data.length === 0) return [];
+
+    const cultures = data
+        .map(item => item.Simplified_Culture) // Adjust key name to match your CSV header
+        .filter(Boolean) // Removes null, undefined, or empty strings
+        .map(c => c.trim()); // Cleans up any stray whitespace
+
+    // Use Set to remove duplicates, then sort alphabetically
+    return Array.from(new Set(cultures)).sort();
+};

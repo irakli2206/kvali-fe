@@ -35,18 +35,24 @@ import { Virtuoso } from "react-virtuoso"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandInput, CommandEmpty, CommandList, CommandItem } from "@/components/ui/command"
 import { Button } from '../ui/button'
-import { LargeSampleSearch } from './large-sample-search'
+import { LargeSampleSearch } from './map/large-sample-search'
 import { useMapStore } from "@/store/use-map-store"
 import Link from 'next/link'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
+import { CultureSearch } from './map/culture-search'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
-    const { setTargetSample } = useMapStore((state) => state);
+    const { setTargetSample, setSelectedCulture, setSelectedSample, setSelectedYDNA, setMapMode, setTimeWindow } = useMapStore((state) => state);
 
 
-    const resetTargetSample = () => {
+    const resetMap = () => {
         setTargetSample(null)
+        setMapMode('neutral')
+        setSelectedCulture(null)
+        setSelectedSample(null)
+        setSelectedYDNA([])
+        setTimeWindow([-50000, 2000])
     }
 
     return (
@@ -57,13 +63,14 @@ const AppHeader = ({ samples }: any) => {
                 </Link>
             </section>
 
-            <section className='w-1/3'>
+            <section className='w-1/3 max-w-1/3 flex gap-2'>
                 <LargeSampleSearch samples={samples} />
+                <CultureSearch samples={samples} />
             </section>
 
             <section className='flex gap-2'>
 
-                <Button variant='secondary' onClick={() => { resetTargetSample() }}>Reset Map</Button>
+                <Button variant='secondary' onClick={() => { resetMap() }}>Reset Map</Button>
             </section>
         </div>
     )

@@ -15,6 +15,8 @@ interface MapState {
     setTimeWindow: (timeWindow: [number, number]) => void
     selectedYDNA: string[],
     setSelectedYDNA: (groups: string[]) => void,
+    selectedCulture: string | null
+    setSelectedCulture: (culture: string | null) => void
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -28,4 +30,6 @@ export const useMapStore = create<MapState>((set) => ({
     setTimeWindow: (timeWindow) => set({ timeWindow: timeWindow }),
     selectedYDNA: [],
     setSelectedYDNA: (ydna) => set({ selectedYDNA: ydna }),
+    selectedCulture: null,
+    setSelectedCulture: (culture) => set({ selectedCulture: culture })
 }))

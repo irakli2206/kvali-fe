@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover"
 import { useMapStore } from "@/store/use-map-store"
 import { getSampleDetails } from "@/lib/api/samples"
+import { getCultureBounds, getUniqueCultures } from "@/lib/map-utils"
 
 interface Sample {
     "Object-ID": string;
@@ -27,28 +28,36 @@ interface Sample {
     [key: string]: any;
 }
 
-export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
+export function CultureSearch({ samples = [] }: { samples: Sample[] }) {
     const [open, setOpen] = React.useState(false)
     const [search, setSearch] = React.useState("")
 
-    const { selectedSample, setSelectedSample } = useMapStore((state) => state)
+    const { selectedSample, setSelectedSample, selectedCulture, setSelectedCulture } = useMapStore((state) => state)
+
+    const cultureOptions = React.useMemo(() => {
+        const uniqueCultures = getUniqueCultures(samples);
+
+        // Returning objects makes it easier for Shadcn Command/Select components
+        return uniqueCultures.map(culture => ({
+            label: culture,
+            value: culture.toLowerCase().replace(/\s+/g, '-'), // URL/ID friendly version
+            original: culture
+        }));
+    }, [samples]);
 
 
     // 1. Guard against undefined samples during filtering
     const filteredSamples = React.useMemo(() => {
-        if (!samples || !Array.isArray(samples)) return []
-        if (!search) return samples
+        if (!cultureOptions || !Array.isArray(cultureOptions)) return []
+        if (!search) return cultureOptions
 
         const s = search.toLowerCase()
-        return samples.filter(item =>
-            item['Object-ID']?.toLowerCase().includes(s) ||
-            item['Simplified_Culture']?.toLowerCase().includes(s)
-        )
-    }, [search, samples])
+        return cultureOptions.filter(item => item.original.toLowerCase().includes(s))
+    }, [search, cultureOptions])
 
     // 2. Early return if samples haven't loaded yet
-    if (!samples) {
-        return <Button variant="outline" className="w-[450px]" disabled>Loading samples...</Button>
+    if (!cultureOptions) {
+        return <Button variant="outline" className="w-[300px]" disabled>Loading samples...</Button>
     }
 
     return (
@@ -57,13 +66,13 @@ export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
                 <Button
                     variant="outline"
                     role="combobox"
-                    className="w-[450px] justify-between font-normal"
+                    className="w-[300px] justify-between font-normal"
                 >
-                    {selectedSample ? selectedSample.Simplified_Culture : "Select genetic sample..."}
+                    {selectedCulture ? selectedCulture : "Select culture..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[450px] p-0 shadow-2xl">
+            <PopoverContent className="w-[300px] p-0 shadow-2xl">
                 <Command shouldFilter={false}>
                     <CommandInput
                         placeholder="Search ID or culture..."
@@ -81,20 +90,22 @@ export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
                                 data={filteredSamples}
                                 itemContent={(index, sample) => (
                                     <CommandItem
-                                        key={sample["id"]}
-                                        value={sample["id"]}
-                                        onSelect={async (currentValue) => {
-                                            const sampleData = await getSampleDetails(currentValue)
-                                            console.log('sampleData', sampleData)
-                                            setSelectedSample(sampleData.data)
-                                            setOpen(false)
+                                        key={sample.value}
+                                        value={sample.value}
+                                        onSelect={(currentValue) => {
+                                            const selectedObj = cultureOptions.find(c => c.value === currentValue);
+                                            if (selectedObj) {
+                                                // Just tell the store which culture was picked
+                                                setSelectedCulture(selectedObj.original);
+                                                // Clear the individual sample if one was selected
+                                                setSelectedSample(null);
+                                            }
+                                            setOpen(false);
                                         }}
                                         className="flex flex-col items-start py-3"
                                     >
-                                        <span className="font-medium text-sm">{sample["Object-ID"]}</span>
-                                        <span className="text-[10px] text-zinc-500 uppercase">
-                                            {sample["Simplified_Culture"]}
-                                        </span>
+                                        <span className="font-medium text-sm">{sample.label}</span>
+
                                     </CommandItem>
                                 )}
                             />
