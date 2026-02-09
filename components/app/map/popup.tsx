@@ -6,6 +6,7 @@ import { X, Star, Clock, ClockFading, Dna, Grid2X2X, Link, VenusAndMars, LucideI
 import CoverageBadge from "@/components/shared/coverage-badge"
 import { Button } from "@/components/ui/button"
 import { ReactNode } from "react"
+import { formatYear } from "@/lib/utils"
 
 const PopupSkeleton = () => (
     <div className="w-md rounded-md min-h-[300px] bg-white border p-4 space-y-4">
@@ -92,8 +93,9 @@ export default function MapPopup({ sample, handleCalculateDists }: { sample: Sam
 
 
 const getPopupContent = (data: Sample) => {
-    const dateNum = Number(data.Mean)
-    const parsedDate = dateNum > 0 ? `${Math.abs(dateNum)} CE` : `${Math.abs(dateNum)} BCE`
+    console.log('data', data)
+    const dateNum = data.Mean
+    const parsedDate = formatYear(dateNum)
 
     return [
         {
@@ -116,7 +118,7 @@ const getPopupContent = (data: Sample) => {
             label: 'Y-DNA',
             // If data.YFull is missing, value becomes null, triggering N/A
             value: data.YFull ? (
-                <a href={data['Y-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
+                <a href={data['Y-YFull'] as string} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
                     {data.YFull} <Link className='w-2.5' />
                 </a>
             ) : null
@@ -125,7 +127,7 @@ const getPopupContent = (data: Sample) => {
             icon: Dna,
             label: 'mtDNA',
             value: data.mtree ? (
-                <a href={data['mt-YFull']} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
+                <a href={data['mt-YFull'] as string} target='_blank' className='flex items-center gap-1 text-blue-500 hover:underline'>
                     {data.mtree} <Link className='w-2.5' />
                 </a>
             ) : null

@@ -6,12 +6,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
-export const formatYear = (year: number) => {
-  const absYear = Math.abs(year);
-  // Use 'de-DE' for space separators (20 000) or 'en-US' for commas (20,000)
-  const formatted = new Intl.NumberFormat('en-US').format(absYear);
+export const formatYear = (year: any) => {
+  if (year === null || year === undefined || year === '') return 'Unknown';
 
-  if (year < 0) return `${formatted} BCE`;
-  if (year === 0) return `0`;
+  const cleaned = String(year)
+    .replace(/[^\d,.-]/g, '')  // Remove non-numeric chars
+    .replace(/,/g, '.');         // Commas to dots
+
+  const numericYear = parseFloat(cleaned);
+  if (isNaN(numericYear)) return 'Unknown';
+
+  const roundedYear = Math.round(numericYear);
+  const formatted = new Intl.NumberFormat('en-US').format(Math.abs(roundedYear));
+
+  if (roundedYear < 0) return `${formatted} BCE`;
+  if (roundedYear === 0) return '0';
   return `${formatted} CE`;
 };

@@ -15,6 +15,7 @@ import {
     useQuery,
 } from '@tanstack/react-query'
 import { useEffect, useState } from "react";
+import { Sample } from "@/types";
 
 export default function AppLayout({
     children,
@@ -22,7 +23,7 @@ export default function AppLayout({
     children: React.ReactNode;
 }>) {
 
-    const [mapData, setMapData] = useState()
+    const [mapData, setMapData] = useState<Partial<Sample>[] | null>()
 
     useEffect(() => {
         const getData = async () => {

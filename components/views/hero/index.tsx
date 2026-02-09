@@ -1,9 +1,8 @@
 import Hero from "@/components/views/hero/hero";
 import BrandSlider, { BrandList } from "@/components/views/hero/brand-slider";
-import type { AvatarList } from "@/components/shadcn-space/blocks/hero-01/hero";
 
 export default function AgencyHero() {
-  const avatarList: AvatarList[] = [
+  const avatarList = [
     {
       image: "https://images.shadcnspace.com/assets/profiles/user-1.jpg",
     },

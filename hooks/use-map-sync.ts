@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import mapboxgl from 'mapbox-gl';
+import mapboxgl, { DataDrivenPropertyValueSpecification } from 'mapbox-gl';
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import { distanceColors, YDNAColors } from '@/lib/map-utils';
 import { MapMode, Sample } from '@/types';
@@ -56,7 +56,7 @@ export function useMapSync({
                     ? distanceColors
                     : (mapMode === 'ydna' ? YDNAColors : '#78716c');
 
-            map.setPaintProperty('ancient-points', 'circle-color', color);
+            map.setPaintProperty('ancient-points', 'circle-color', color as DataDrivenPropertyValueSpecification<string>);
         };
 
         // If the style is changing, wait for it to be ready before drawing

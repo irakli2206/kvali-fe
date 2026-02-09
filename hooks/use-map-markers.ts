@@ -22,8 +22,8 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
         const map = mapRef.current;
         if (!selectedSample || !map) return;
 
-        const lat = parseCoords(selectedSample["Latitude"]);
-        const lng = parseCoords(selectedSample["Longitude"]);
+        const lat = parseCoords(selectedSample["Latitude"]!);
+        const lng = parseCoords(selectedSample["Longitude"]!);
         if (isNaN(lat) || isNaN(lng)) return;
 
         // 1. Handle Marker (The Ping)

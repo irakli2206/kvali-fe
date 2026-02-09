@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
+import { Sample } from '@/types'
 import { Tables } from '@/types/database.types'
 
 export type AdnaRow = Tables<'adna'>
@@ -31,10 +32,10 @@ export async function getMapSamples() {
             return { data: null, error: error.message }
         }
 
-        const cleanedData = data.map(item => ({
+        const cleanedData: Partial<Sample>[] = data.map(item => ({
             ...item,
-            Latitude: item.Latitude ? parseFloat(item.Latitude.replace(',', '.')) : 0,
-            Longitude: item.Longitude ? parseFloat(item.Longitude.replace(',', '.')) : 0,
+            Latitude: item.Latitude ? parseFloat(item.Latitude.replace(',', '.')) : 0 as any,
+            Longitude: item.Longitude ? parseFloat(item.Longitude.replace(',', '.')) : 0 as any,
         }))
 
         return { data: cleanedData, error: null }
