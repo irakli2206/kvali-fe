@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useMapStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
 import { Map, Settings } from 'lucide-react'
-import { MapMode, MapTheme } from '@/types'
+import { MapMode, MapTheme, Sample } from '@/types'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenu, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu'
 import MapPopup from './popup'
 import TimeWindowController from './time-window-controller'
@@ -47,7 +47,10 @@ export default function MapView({ data }: { data: any[] }) {
         <div className="relative w-full h-full bg-[#f8f8f8] overflow-hidden">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
-            <DistanceLegend />
+            {mapRef && <DistanceLegend mapRef={mapRef} mapData={geojsonData.features.map(f => ({
+                ...(f.properties as Sample),     // 1. Bring back all Sample fields
+                distance: f.properties?.distance // 2. Add the distance field
+            }))} />}
 
             <div className="absolute right-2 top-2 flex flex-col gap-2">
                 <DropdownMenu>
@@ -56,7 +59,7 @@ export default function MapView({ data }: { data: any[] }) {
                         <DropdownMenuLabel>Map Mode</DropdownMenuLabel>
                         <DropdownMenuRadioGroup value={mapMode} onValueChange={(v) => v === 'neutral' ? resetData() : setMapMode(v as MapMode)}>
                             <DropdownMenuRadioItem value="neutral">Neutral</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="distance">Distances</DropdownMenuRadioItem>
+                            {/* <DropdownMenuRadioItem value="distance">Distances</DropdownMenuRadioItem> */}
                             <DropdownMenuRadioItem value="ydna">Y-DNA</DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                     </DropdownMenuContent>

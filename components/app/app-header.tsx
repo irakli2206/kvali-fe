@@ -71,7 +71,7 @@ const AppHeader = ({ samples }: any) => {
 
             <section className='flex gap-2'>
                 <Button variant='secondary' onClick={() => { resetMap() }}>Reset Map</Button>
-                <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button>
+                {/* <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button> */}
             </section>
         </div>
     )

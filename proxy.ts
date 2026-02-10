@@ -16,14 +16,14 @@ export async function proxy(request: NextRequest) {
     const hasSession = !!supabaseCookie
 
     // LOGIC A: If logged in, don't let them see signin/signup
-    if (hasSession && isAuthPage) {
-        return NextResponse.redirect(new URL('/app', request.url))
-    }
+    // if (hasSession && isAuthPage) {
+    //     return NextResponse.redirect(new URL('/app', request.url))
+    // }
 
-    // LOGIC B: If NOT logged in, don't let them see the app
-    if (!hasSession && isAppPage) {
-        return NextResponse.redirect(new URL('/signin', request.url))
-    }
+    // // LOGIC B: If NOT logged in, don't let them see the app
+    // if (!hasSession && isAppPage) {
+    //     return NextResponse.redirect(new URL('/signin', request.url))
+    // }
 
     return response
 }
