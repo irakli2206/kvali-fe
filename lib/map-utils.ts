@@ -20,40 +20,46 @@ export const getCultureBounds = (cultureName: string, allSamples: any[]) => {
 
 
 export function csvToGeoJSON(rows: any[]) {
-    if (!rows || rows.length === 0) {
-        return { type: 'FeatureCollection', features: [] };
-    }
+    if (!rows || rows.length === 0) return { type: 'FeatureCollection', features: [] };
+
+    const JITTER_FACTOR = 0.01; 
+    const coordCounts = new Map<string, number>();
 
     return {
         type: 'FeatureCollection',
-        features: rows
-            .filter(row => row.Latitude && row.Longitude)
-            .map(row => {
-                const lng = typeof row.Longitude === 'string'
-                    ? parseFloat(row.Longitude.replace(',', '.'))
-                    : row.Longitude;
+        features: rows.filter(r => r.Latitude && r.Longitude).map((row, index) => {
+            let lng = typeof row.Longitude === 'string' ? parseFloat(row.Longitude.replace(',', '.')) : row.Longitude;
+            let lat = typeof row.Latitude === 'string' ? parseFloat(row.Latitude.replace(',', '.')) : row.Latitude;
 
-                const lat = typeof row.Latitude === 'string'
-                    ? parseFloat(row.Latitude.replace(',', '.'))
-                    : row.Latitude;
+            const coordKey = `${lng.toFixed(5)}|${lat.toFixed(5)}`;
+            const count = coordCounts.get(coordKey) || 0;
+            coordCounts.set(coordKey, count + 1);
 
-                return {
-                    type: 'Feature',
-                    id: row.id,
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [lng, lat]
-                    },
-                    properties: {
-                        // Spread the whole row to keep all data accessible
-                        ...row,
-                        id: row.id,
-                        culture: row.Simplified_Culture,
-                        // CRITICAL: Mapbox needs this to be a number for interpolation
-                        distance: typeof row.distance === 'number' ? row.distance : 1.0
-                    }
-                };
-            })
+            // Store originals before we mutate
+            const originalLat = lat;
+            const originalLng = lng;
+
+            if (count > 0) {
+                const angle = count * 2.4; 
+                const radius = JITTER_FACTOR * Math.sqrt(count);
+                lng += Math.cos(angle) * radius;
+                lat += Math.sin(angle) * radius;
+            }
+
+            return {
+                type: 'Feature',
+                id: row.id || row['Object-ID'],
+                geometry: { type: 'Point', coordinates: [lng, lat] },
+                properties: {
+                    ...row,
+                    // We override the properties so the rest of the app "just works"
+                    Latitude: lat,
+                    Longitude: lng,
+                    original_lat: originalLat,
+                    original_lng: originalLng
+                }
+            };
+        })
     };
 }
 
