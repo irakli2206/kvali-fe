@@ -112,8 +112,8 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
               return (
                 <div
                   key={itemId}
-                  onMouseEnter={() => handleMouseEnter(itemId)}
-                  onMouseLeave={() => handleMouseLeave(itemId)}
+                  onMouseEnter={() => handleMouseEnter(itemId as string)}
+                  onMouseLeave={() => handleMouseLeave(itemId as string)}
                   onClick={() => handleJumpTo(sample)}
                   className={cn(
                     "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200 ease-in-out",
