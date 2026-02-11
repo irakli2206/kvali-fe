@@ -3,6 +3,7 @@ import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils';
 import { useMapStore } from '@/store/use-map-store';
 import { Sample } from '@/types';
+import { calculateDistances } from '@/lib/api/samples';
 
 export function useMapData(initialData: any[]) {
     const [mapData, setMapData] = useState(initialData);
@@ -55,8 +56,9 @@ export function useMapData(initialData: any[]) {
         return { ...baseGeoJSON, features: filteredFeatures } as FeatureCollection<Geometry, GeoJsonProperties>;
     }, [mapData, timeWindow, mapMode, selectedYDNA, targetSample]);
 
-    const handleCalculateDists = (target: Sample) => {
-        const updated = runComparisonLogic(target.id, mapData, target.g25_string!);
+    const handleCalculateDists = async (target: Sample) => {
+        const updated = await calculateDistances(target);
+        console.log('updated', updated)
         setSelectedCulture(null); // Clear culture highlight when calculating
         setTargetSample(target);
         setMapData(updated);
