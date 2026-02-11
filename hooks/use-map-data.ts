@@ -57,11 +57,34 @@ export function useMapData(initialData: any[]) {
     }, [mapData, timeWindow, mapMode, selectedYDNA, targetSample]);
 
     const handleCalculateDists = async (target: Sample) => {
-        const updated = await calculateDistances(target);
-        console.log('updated', updated)
-        setSelectedCulture(null); // Clear culture highlight when calculating
+        // 1. Get the Top 200 from the DB (Fast! ~100-150ms)
+        const topMatches: Partial<Sample & { distance: number }>[] = await calculateDistances(target);
+
+        if (!topMatches) return;
+
+        setSelectedCulture(null);
         setTargetSample(target);
-        setMapData(updated);
+
+        // 2. Create a Map of the distances for O(1) lookup
+        const distanceMap = new Map(topMatches.map(item => [item.id, item.distance]));
+
+        // 3. Merge: Keep all initialData, but add distance to the matches
+        const mergedData = initialData.map(originalSample => {
+            // If this sample is in our Top 200, give it the real distance
+            if (distanceMap.has(originalSample.id)) {
+                return {
+                    ...originalSample,
+                    distance: distanceMap.get(originalSample.id)
+                };
+            }
+            // Otherwise, it stays in the dataset but gets 0 (or undefined)
+            return {
+                ...originalSample,
+                distance: 10
+            };
+        });
+
+        setMapData(mergedData);
         setMapMode('distance');
     };
 
@@ -76,6 +99,6 @@ export function useMapData(initialData: any[]) {
         geojsonData,
         handleCalculateDists,
         resetData,
-        mapData 
+        mapData
     };
 }

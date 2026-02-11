@@ -42,7 +42,7 @@ function Hero({ avatarList }: HeroSectionProps) {
                     <div className="container mx-auto relative z-10">
                         <div className="flex flex-col max-w-5xl mx-auto gap-8">
                             <div className="relative flex flex-col text-center items-center sm:gap-6 gap-4">
-                                <motion.h1
+                                {/* <motion.h1
                                     initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{
@@ -59,6 +59,24 @@ function Hero({ avatarList }: HeroSectionProps) {
                                     >
                                         real historical journeys
                                     </span>
+                                </motion.h1> */}
+                                <motion.h1
+                                    initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 260,
+                                        damping: 20,
+                                        delay: 0
+                                    }}
+                                    className="lg:text-8xl md:text-7xl text-5xl font-medium leading-14 md:leading-20 lg:leading-24"
+                                >
+                                    Ancient DNA {" "}
+                                    <span
+                                        className={`${instrumentSerif.className} tracking-tight`}
+                                    >
+                                        made simple
+                                    </span>
                                 </motion.h1>
                                 <motion.p
                                     initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
@@ -71,9 +89,7 @@ function Hero({ avatarList }: HeroSectionProps) {
                                     }}
                                     className="text-base font-normal max-w-2xl text-muted-foreground"
                                 >
-                                    At shadcn space, we help small startups tackle the world's
-                                    biggest challenges with tailored solutions, guiding you from
-                                    strategy to success in a competitive market.
+                                    Kvali is a tool combining public archaeogenetic data from different sources into a centralized and intuitive genetic compendium
                                 </motion.p>
                             </div>
                             <motion.div

@@ -93,9 +93,16 @@ export async function getSampleDetails(id: string) {
 
 export async function calculateDistances(sample: Sample) {
     const supabase = await createClient()
+    const numericArray = sample.g25_string
+        .split(',')
+        .map(n => parseFloat(n.trim()))
+        .filter(n => !isNaN(n));
+
+    // 2. Pass the array directly
     const { data, error } = await supabase.rpc('calculate_distances', {
-        target_g25: sample.g25_string
+        target_vector: sample.g25_vector
     });
+
     console.log('error', error)
     return data
 }
