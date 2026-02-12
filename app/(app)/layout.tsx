@@ -28,6 +28,7 @@ export default function AppLayout({
     useEffect(() => {
         const getData = async () => {
             const { data, error } = await getMapSamples()
+            //@ts-ignore
             setMapData(data)
         }
         getData()

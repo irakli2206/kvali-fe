@@ -82,7 +82,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                 <div>
                     <a href="#">
                         {/* <Logo className="gap-3" /> */}
-                        <Image src={Logo2} alt='' className="h-12 w-auto" width={128} height={128} />
+                        <Image src={Logo2} alt='' className="h-10 w-auto" width={128} height={128} />
                     </a>
 
                 </div>

@@ -20,12 +20,9 @@ import {
 } from "@/components/ui/popover"
 import { useMapStore } from "@/store/use-map-store"
 import { getSampleDetails } from "@/lib/api/samples"
+import { Sample } from "@/types"
 
-interface Sample {
-    "Object-ID": string;
-    "Simplified_Culture": string;
-    [key: string]: any;
-}
+
 
 export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
     const [open, setOpen] = React.useState(false)

@@ -29,6 +29,7 @@ export async function getMapSamples() {
             .not('g25_string', 'is', null)
             .csv()
 
+        //@ts-ignore
         const csvSize = Buffer.byteLength(data);
 
         console.log(`CSV size: ${(csvSize / 1024).toFixed(2)} KB`);
@@ -93,13 +94,11 @@ export async function getSampleDetails(id: string) {
 
 export async function calculateDistances(sample: Sample) {
     const supabase = await createClient()
-    const numericArray = sample.g25_string
-        .split(',')
-        .map(n => parseFloat(n.trim()))
-        .filter(n => !isNaN(n));
+
 
     // 2. Pass the array directly
     const { data, error } = await supabase.rpc('calculate_distances', {
+        //@ts-ignore
         target_vector: sample.g25_vector
     });
 

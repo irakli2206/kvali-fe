@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'; // Added useEffect
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
-import { csvToGeoJSON, runComparisonLogic } from '@/lib/map-utils';
+import { csvToGeoJSON} from '@/lib/map-utils';
 import { useMapStore } from '@/store/use-map-store';
 import { Sample } from '@/types';
 import { calculateDistances } from '@/lib/api/samples';

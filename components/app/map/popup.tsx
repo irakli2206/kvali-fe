@@ -29,6 +29,7 @@ const PopupSkeleton = () => (
 // --- Sub-Component: Popup ---
 export default function MapPopup({ sample, handleCalculateDists }: { sample: Sample, handleCalculateDists: (sample: Sample) => void }) {
     // isLoading and data are managed for you
+    console.log('id', sample.id)
     const { data, isLoading } = useQuery({
         queryKey: ['sample', sample.id],
         queryFn: () => getSampleDetails(sample.id).then(res => res.data),

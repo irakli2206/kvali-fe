@@ -48,7 +48,7 @@ export function csvToGeoJSON(rows: any[]) {
 
             return {
                 type: 'Feature',
-                id: row.id || row['Object-ID'],
+                id: row.id,
                 geometry: { type: 'Point', coordinates: [lng, lat] },
                 properties: {
                     ...row,
@@ -63,40 +63,40 @@ export function csvToGeoJSON(rows: any[]) {
     };
 }
 
-export const runComparisonLogic = (targetId: string, allPoints: any[], targetG25Raw: string) => {
-    // 1. Parse the target coordinates into an array of numbers
-    // This handles both "ID, 0.1, 0.2" and "0.1, 0.2"
-    const targetParts = targetG25Raw.split(',');
-    const targetCoords = targetParts
-        .map(Number)
-        .filter(n => !isNaN(n));
+// export const runComparisonLogic = (targetId: string, allPoints: any[], targetG25Raw: string) => {
+//     // 1. Parse the target coordinates into an array of numbers
+//     // This handles both "ID, 0.1, 0.2" and "0.1, 0.2"
+//     const targetParts = targetG25Raw.split(',');
+//     const targetCoords = targetParts
+//         .map(Number)
+//         .filter(n => !isNaN(n));
 
-    if (targetCoords.length === 0) {
-        console.error("Invalid Target Coordinates");
-        return allPoints;
-    }
+//     if (targetCoords.length === 0) {
+//         console.error("Invalid Target Coordinates");
+//         return allPoints;
+//     }
 
-    // 2. Map through all points and calculate distance directly
-    return allPoints.map(point => {
-        if (!point.g25_string) return { ...point, distance: 999 };
+//     // 2. Map through all points and calculate distance directly
+//     return allPoints.map(point => {
+//         if (!point.g25_string) return { ...point, distance: 999 };
 
-        // Parse point coords (assuming g25_string is "0.123,0.456...")
-        const pointCoords = point.g25_string.split(',').map(Number);
+//         // Parse point coords (assuming g25_string is "0.123,0.456...")
+//         const pointCoords = point.g25_string.split(',').map(Number);
 
-        // 3. Euclidean Distance Calculation
-        const sumSq = targetCoords.reduce((sum, val, i) => {
-            const pVal = pointCoords[i] || 0;
-            return sum + Math.pow(val - pVal, 2);
-        }, 0);
+//         // 3. Euclidean Distance Calculation
+//         const sumSq = targetCoords.reduce((sum, val, i) => {
+//             const pVal = pointCoords[i] || 0;
+//             return sum + Math.pow(val - pVal, 2);
+//         }, 0);
 
-        const dist = Math.sqrt(sumSq);
+//         const dist = Math.sqrt(sumSq);
 
-        return {
-            ...point,
-            distance: dist
-        };
-    });
-};
+//         return {
+//             ...point,
+//             distance: dist
+//         };
+//     });
+// };
 
 
 export const YDNAColors = [

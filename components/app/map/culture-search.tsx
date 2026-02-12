@@ -21,12 +21,9 @@ import {
 import { useMapStore } from "@/store/use-map-store"
 import { getSampleDetails } from "@/lib/api/samples"
 import { getCultureBounds, getUniqueCultures } from "@/lib/map-utils"
+import { Sample } from "@/types"
 
-interface Sample {
-    "Object-ID": string;
-    "Simplified_Culture": string;
-    [key: string]: any;
-}
+
 
 export function CultureSearch({ samples = [] }: { samples: Sample[] }) {
     const [open, setOpen] = React.useState(false)

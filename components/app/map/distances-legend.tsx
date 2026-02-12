@@ -18,9 +18,10 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
 
   if (mapMode !== 'distance' || !targetSample) return null;
 
+  console.log('mapData', mapData)
   const topMatches = [...mapData]
-    .filter(s => s['Object-ID'] !== targetSample['Object-ID'] && s.distance !== undefined)
-    .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    .filter(s => s['id'] !== targetSample['id'] && s.distance !== undefined)
+    .sort((a, b) => (a.distance) - (b.distance))
     .slice(0, 10);
 
   const handleMouseEnter = (id: string) => {
@@ -105,7 +106,8 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
           </span>
           <div className="flex flex-col gap-1.5">
             {topMatches.map((sample) => {
-              const itemId = sample['Object-ID'];
+              console.log('sample', sample)
+              const itemId = sample['id'];
               const isSelected = hoveredId === itemId;
               const isDimmed = hoveredId !== null && !isSelected;
 
@@ -129,7 +131,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                       "truncate font-medium  transition-colors",
                       isSelected ? "text-blue-600" : "text-stone-700"
                     )}>
-                      {`${sample.Simplified_Culture} (${itemId})`}
+                      {`${sample.Simplified_Culture} (${sample['Object-ID']})`}
                     </span>
                   </div>
                   <span className={cn(
