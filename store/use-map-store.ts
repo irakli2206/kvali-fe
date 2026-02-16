@@ -10,13 +10,15 @@ interface MapState {
     targetSample: Sample | null;
     setTargetSample: (sample: Sample | null) => void;
     mapMode: MapMode;
-    setMapMode: (mapMode: MapMode) => void;
+    setMapMode: (mapMode: MapMode) => void
     timeWindow: [number, number]
     setTimeWindow: (timeWindow: [number, number]) => void
-    selectedYDNA: string[],
+    selectedYDNA: string[]
     setSelectedYDNA: (groups: string[]) => void,
     selectedCulture: string | null
     setSelectedCulture: (culture: string | null) => void
+    hoveredId: string | null
+    setHoveredId: (id: string | null) => void
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -31,5 +33,7 @@ export const useMapStore = create<MapState>((set) => ({
     selectedYDNA: [],
     setSelectedYDNA: (ydna) => set({ selectedYDNA: ydna }),
     selectedCulture: null,
-    setSelectedCulture: (culture) => set({ selectedCulture: culture })
+    setSelectedCulture: (culture) => set({ selectedCulture: culture }),
+    hoveredId: null,
+    setHoveredId: (id) => set({hoveredId: id})
 }))

@@ -24,12 +24,13 @@ export default function MapView({ data }: { data: any[] }) {
     const { geojsonData, handleCalculateDists, resetData } = useMapData(data);
     const {
         selectedSample, setSelectedSample, targetSample,
-        mapMode, setMapMode, selectedCulture
+        mapMode, setMapMode, selectedCulture,
+        hoveredId
     } = useMapStore();
 
     // The logic is now fully encapsulated in these three hooks
-    useMapSync({ mapRef, geojsonData, mapMode, targetSample, selectedCulture, activeTheme });
-    const { popupContainer } = useMapMarkers(mapRef, geojsonData);
+    useMapSync({ mapRef, geojsonData: geojsonData as any, mapMode, targetSample, selectedCulture, activeTheme, hoveredId });
+    const { popupContainer, closePopup } = useMapMarkers(mapRef, geojsonData);
 
     // Only one side-effect left: the click listener
     useEffect(() => {
@@ -47,10 +48,15 @@ export default function MapView({ data }: { data: any[] }) {
         <div className="relative w-full h-full bg-[#f8f8f8] overflow-hidden">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
-            {mapRef && <DistanceLegend mapRef={mapRef} mapData={geojsonData.features.map(f => ({
-                ...(f.properties as Sample),     // 1. Bring back all Sample fields
-                distance: f.properties?.distance // 2. Add the distance field
-            }))} />}
+            {mapRef.current && mapMode === 'distance' && (
+                <DistanceLegend
+                    mapRef={mapRef}
+                    mapData={geojsonData.features.map(f => ({
+                        ...(f.properties as Sample),
+                        distance: f.properties?.distance
+                    }))}
+                />
+            )}
 
             <div className="absolute right-2 top-2 flex flex-col gap-2">
                 <DropdownMenu>
@@ -82,7 +88,7 @@ export default function MapView({ data }: { data: any[] }) {
             <div className='absolute bottom-4 w-full'><TimeWindowController /></div>
 
             {popupContainer && selectedSample && createPortal(
-                <MapPopup sample={selectedSample} handleCalculateDists={handleCalculateDists} />,
+                <MapPopup sample={selectedSample} handleCalculateDists={handleCalculateDists} onClose={closePopup} />,
                 popupContainer
             )}
         </div>

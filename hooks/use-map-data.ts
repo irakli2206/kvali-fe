@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'; // Added useEffect
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
-import { csvToGeoJSON} from '@/lib/map-utils';
+import { csvToGeoJSON } from '@/lib/map-utils';
 import { useMapStore } from '@/store/use-map-store';
 import { Sample } from '@/types';
 import { calculateDistances } from '@/lib/api/samples';
@@ -18,41 +18,56 @@ export function useMapData(initialData: any[]) {
         setSelectedCulture
     } = useMapStore();
 
-    // Fix: When a culture is picked, kill the distance mode/target
+    // Sync local state if initialData arrives late (e.g. from an async fetch)
+    useEffect(() => {
+        if (initialData?.length > 0) {
+            setMapData(initialData);
+        }
+    }, [initialData]);
+
+    // Kill distance mode if a culture is selected
     useEffect(() => {
         if (selectedCulture && mapMode === 'distance') {
             setMapMode('neutral');
             setTargetSample(null);
-            // Optionally reset data if distances were calculated
             setMapData(initialData);
         }
     }, [selectedCulture, setMapMode, setTargetSample, initialData]);
 
     const geojsonData = useMemo(() => {
         const baseGeoJSON = csvToGeoJSON(mapData);
-        const [minYear, maxYear] = timeWindow || [-10000, 2026];
+        if (!baseGeoJSON.features.length) return baseGeoJSON;
+
+        // Ensure we have numbers, not undefined/null
+        const minYear = timeWindow?.[0] ?? -10000;
+        const maxYear = timeWindow?.[1] ?? 2026;
 
         const filteredFeatures = baseGeoJSON.features.filter(feature => {
             const props = feature.properties;
             if (!props) return false;
 
             const year = parseFloat(props.Mean);
-            const isWithinTime = !isNaN(year) && year >= minYear && year <= maxYear;
-            const isTarget = targetSample && props.id === targetSample.id;
 
-            if (!isWithinTime && !isTarget) return false;
+            // If the sample doesn't have a year, decide if you want to show it
+            // Usually, we want to show it in 'neutral' mode anyway
+            const isWithinTime = isNaN(year) || (year >= minYear && year <= maxYear);
+            if (!isWithinTime) return false;
 
+            // 3. Mode Specific Filters
             if (mapMode === 'ydna') {
                 const sampleY = props['Y-Symbol'];
                 const isValidY = sampleY && !['null', 'unknown', 'N/A', '', 'None'].includes(sampleY);
                 if (!isValidY) return false;
+
                 if (selectedYDNA?.length > 0) {
                     return selectedYDNA.some(group => sampleY?.startsWith(group));
                 }
             }
+
             return true;
         });
 
+        console.log(`Filtered from ${baseGeoJSON.features.length} to ${filteredFeatures.length} points`);
         return { ...baseGeoJSON, features: filteredFeatures } as FeatureCollection<Geometry, GeoJsonProperties>;
     }, [mapData, timeWindow, mapMode, selectedYDNA, targetSample]);
 

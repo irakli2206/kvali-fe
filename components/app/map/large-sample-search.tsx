@@ -82,7 +82,6 @@ export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
                                         value={sample["id"]}
                                         onSelect={async (currentValue) => {
                                             const sampleData = await getSampleDetails(currentValue)
-                                            console.log('sampleData', sampleData)
                                             setSelectedSample(sampleData.data)
                                             setOpen(false)
                                         }}

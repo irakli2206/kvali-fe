@@ -27,9 +27,8 @@ const PopupSkeleton = () => (
 )
 
 // --- Sub-Component: Popup ---
-export default function MapPopup({ sample, handleCalculateDists }: { sample: Sample, handleCalculateDists: (sample: Sample) => void }) {
+export default function MapPopup({ sample, handleCalculateDists, onClose }: { sample: Sample, handleCalculateDists: (sample: Sample) => void, onClose: () => void }) {
     // isLoading and data are managed for you
-    console.log('id', sample.id)
     const { data, isLoading } = useQuery({
         queryKey: ['sample', sample.id],
         queryFn: () => getSampleDetails(sample.id).then(res => res.data),
@@ -50,7 +49,7 @@ export default function MapPopup({ sample, handleCalculateDists }: { sample: Sam
     return (
         <div className="w-md min-h-[300px] bg-white border rounded-md drop-shadow-xs flex flex-col">
             <header className='flex w-full   p-1 items-center justify-between border-b'>
-                <Button variant="ghost" size="icon-sm">
+                <Button variant="ghost" size="icon-sm" onClick={onClose}>
                     <X className='' />
                 </Button>
                 <div className="flex ">
@@ -94,7 +93,6 @@ export default function MapPopup({ sample, handleCalculateDists }: { sample: Sam
 
 
 const getPopupContent = (data: Sample) => {
-    console.log('data', data)
     const dateNum = data.Mean
     const parsedDate = formatYear(dateNum)
 

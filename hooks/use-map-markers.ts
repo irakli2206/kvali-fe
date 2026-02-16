@@ -12,7 +12,7 @@ const parseCoords = (val: string | number) =>
     typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
 
 export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geojsonData: any) {
-    const {selectedSample, selectedCulture} = useMapStore()
+    const { selectedSample, selectedCulture } = useMapStore()
 
     const [popupContainer, setPopupContainer] = useState<HTMLDivElement | null>(null);
     const pingRef = useRef<mapboxgl.Marker | null>(null);
@@ -90,5 +90,12 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
         }
     }, [selectedCulture, geojsonData, mapRef]);
 
-    return { popupContainer };
+    const closePopup = () => {
+        if (popupRef.current) {
+            popupRef.current.remove();
+
+        }
+    };
+
+    return { popupContainer, closePopup };
 }

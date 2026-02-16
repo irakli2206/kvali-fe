@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMapStore } from '@/store/use-map-store';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sample } from '@/types';
-import { cn } from '@/lib/utils'; // Assuming you have a cn utility for classes
+import { cn } from '@/lib/utils';
 import { Map } from 'mapbox-gl';
 
 interface DistanceLegendProps {
@@ -13,63 +13,48 @@ interface DistanceLegendProps {
 }
 
 export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
-  const { mapMode, targetSample, setMapMode, setTargetSample, setSelectedSample } = useMapStore();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  // Use the global store for hover state so the map can "see" it
+  const { 
+    mapMode, 
+    targetSample, 
+    setMapMode, 
+    setTargetSample, 
+    setSelectedSample,
+    hoveredId,      
+    setHoveredId    
+  } = useMapStore();
 
   if (mapMode !== 'distance' || !targetSample) return null;
 
-  console.log('mapData', mapData)
   const topMatches = [...mapData]
     .filter(s => s['id'] !== targetSample['id'] && s.distance !== undefined)
     .sort((a, b) => (a.distance) - (b.distance))
     .slice(0, 10);
 
+  // We only update the store. useMapSync will handle the visual change on the map.
   const handleMouseEnter = (id: string) => {
     setHoveredId(id);
-    const map = mapRef?.current;
-
-    // 1. Check if map exists
-    // 2. Check if the 'samples-source' actually exists in the current style
-    if (map && map.getSource('samples-source')) {
-      map.setFeatureState(
-        { source: 'samples-source', id: id },
-        { hover: true }
-      );
-    }
   };
 
-  const handleMouseLeave = (id: string) => {
+  const handleMouseLeave = () => {
     setHoveredId(null);
-    const map = mapRef?.current;
-
-    if (map && map.getSource('samples-source')) {
-      map.setFeatureState(
-        { source: 'samples-source', id: id },
-        { hover: false }
-      );
-    }
   };
 
   const handleJumpTo = (sample: Sample) => {
-    // Use optional chaining to safely check if mapRef exists, then if current exists
     const map = mapRef?.current;
-
     if (map && sample.Longitude && sample.Latitude) {
       map.flyTo({
         center: [Number(sample.Longitude), Number(sample.Latitude)],
         zoom: 7,
         speed: 1.2,
-        curve: 1.1,
         essential: true
       });
-      setSelectedSample(sample)
-    } else {
-      console.warn("Map reference not found or coordinates missing", { mapRef, sample });
+      setSelectedSample(sample);
     }
   };
 
   return (
-    <Card className="absolute top-2 left-2 p-3 w-64 bg-white rounded-md border shadow-none animate-in slide-in-from-right-5 flex flex-col gap-3">
+    <Card className="absolute top-2 left-2 p-3 w-64 bg-white rounded-md border shadow-none animate-in slide-in-from-right-5 flex flex-col gap-3 z-10">
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-muted-foreground">
@@ -79,7 +64,11 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
             variant="ghost"
             size="icon"
             className="h-4 w-4 text-stone-400 hover:text-stone-600"
-            onClick={() => { setMapMode('neutral'); setTargetSample(null); }}
+            onClick={() => { 
+              setMapMode('neutral'); 
+              setTargetSample(null); 
+              setHoveredId(null); 
+            }}
           >
             <X size={12} />
           </Button>
@@ -101,24 +90,23 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
 
       {topMatches.length > 0 && (
         <div className="space-y-2 pt-2 border-t border-stone-100">
-          <span className="text-[10px] font-semibold text-muted-foreground ">
+          <span className="text-[10px] font-semibold text-muted-foreground">
             Closest Matches
           </span>
           <div className="flex flex-col gap-1.5">
             {topMatches.map((sample) => {
-              console.log('sample', sample)
-              const itemId = sample['id'];
+              const itemId = sample['id'] as string;
               const isSelected = hoveredId === itemId;
               const isDimmed = hoveredId !== null && !isSelected;
 
               return (
                 <div
                   key={itemId}
-                  onMouseEnter={() => handleMouseEnter(itemId as string)}
-                  onMouseLeave={() => handleMouseLeave(itemId as string)}
+                  onMouseEnter={() => handleMouseEnter(itemId)}
+                  onMouseLeave={handleMouseLeave}
                   onClick={() => handleJumpTo(sample)}
                   className={cn(
-                    "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200 ease-in-out",
+                    "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200",
                     isDimmed ? "opacity-30 scale-[0.98]" : "opacity-100 scale-100"
                   )}
                 >
@@ -128,7 +116,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                       isSelected ? "bg-blue-600 scale-125" : "bg-[#172554]"
                     )} />
                     <span className={cn(
-                      "truncate font-medium  transition-colors",
+                      "truncate font-medium transition-colors",
                       isSelected ? "text-blue-600" : "text-stone-700"
                     )}>
                       {`${sample.Simplified_Culture} (${sample['Object-ID']})`}
@@ -146,12 +134,6 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
           </div>
         </div>
       )}
-
-      <div className="pt-1">
-        <p className="text-[9px] leading-tight text-stone-400 italic">
-          Lower values indicate closer genetic proximity to the target.
-        </p>
-      </div>
     </Card>
   );
 }
