@@ -52,11 +52,11 @@ export default function MapPopup({ sample, handleCalculateDists, onClose }: { sa
                 <Button variant="ghost" size="icon-sm" onClick={onClose}>
                     <X className='' />
                 </Button>
-                <div className="flex ">
+                {/* <div className="flex ">
                     <Button variant="ghost" size="icon-sm">
                         <Star className='w-4' />
                     </Button>
-                </div>
+                </div> */}
             </header>
 
             <main className="flex flex-col p-4 gap-4">

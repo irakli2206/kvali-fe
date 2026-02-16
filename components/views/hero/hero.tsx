@@ -4,8 +4,10 @@ import { Instrument_Serif } from "next/font/google";
 import SplashCursor from "@/components/animations/splash-cursor";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, BadgeCheck } from "lucide-react";
 import CTAButton from "@/components/ui/cta-button";
+import { Logo23andMe, LogoFTDNA, LogoAncestry, LogoMyHeritage } from "@/components/shared/logos";
+import { Badge } from "@/components/ui/badge";
 
 const instrumentSerif = Instrument_Serif({
     subsets: ["latin"],
@@ -41,7 +43,7 @@ function Hero({ avatarList }: HeroSectionProps) {
                 <div className="relative w-full pt-0 md:pt-20 pb-6 md:pb-10 before:absolute before:w-full before:h-full before:bg-linear-to-r before:from-sky-100 before:via-white before:to-amber-100 before:rounded-full before:top-24 before:blur-3xl before:-z-10 dark:before:from-slate-800 dark:before:via-black dark:before:to-stone-700 dark:before:rounded-full dark:before:blur-3xl dark:before:-z-10">
                     <div className="container mx-auto relative z-10">
                         <div className="flex flex-col max-w-5xl mx-auto gap-8">
-                            <div className="relative flex flex-col text-center items-center sm:gap-6 gap-4">
+                            <div className="relative flex flex-col text-center items-center sm:gap-4 gap-2">
                                 {/* <motion.h1
                                     initial={{ opacity: 0, y: 12 }} // Reduced distance from 32 to 12
                                     animate={{ opacity: 1, y: 0 }}
@@ -89,7 +91,7 @@ function Hero({ avatarList }: HeroSectionProps) {
                                     }}
                                     className="text-base font-normal max-w-2xl text-muted-foreground"
                                 >
-                                    Kvali is a tool combining public archaeogenetic data from different sources into a centralized and intuitive genetic compendium
+                                    The world's ancient genomes, centralized. Map migrations, calculate genetic distances, and explore human history with precision.
                                 </motion.p>
                             </div>
                             <motion.div
@@ -120,25 +122,47 @@ function Hero({ avatarList }: HeroSectionProps) {
                                     </ul>
                                     <div className="gap-1 flex flex-col items-start">
                                         <div className="flex gap-1">
-                                            {Array.from({ length: 5 }).map((_, index) => (
+                                            <Badge variant="secondary" className="bg-green-100/75 border-green-300 text-green-700 dark:bg-green-950 dark:text-green-300">
+                                                <span className="relative flex items-center justify-center size-3">
+                                                    <span className="absolute inline-flex size-2.5 animate-ping rounded-full bg-green-400 opacity-75"></span>
+                                                    <span className="relative inline-flex size-1.5 rounded-full bg-green-500"></span>
+                                                </span>
+                                                Database Live
+                                            </Badge>
+                                            {/* {Array.from({ length: 5 }).map((_, index) => (
                                                 <img
                                                     key={index}
                                                     src="https://images.shadcnspace.com/assets/svgs/icon-star.svg"
                                                     alt="star"
                                                     className="h-4 w-4"
                                                 />
-                                            ))}
+                                            ))} */}
                                         </div>
                                         <p className="sm:text-sm text-xs font-normal text-muted-foreground">
-                                            Trusted by 1000+ clients
+                                            4500+ ancient genomes
                                         </p>
                                     </div>
                                 </div>
                             </motion.div>
+
+                            <footer className="mt-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
+                                <p className="text-sm font-normal sm:px-2 px-10  text-center">Compatible with major DNA providers</p>
+
+                                <div className="flex items-center gap-8 grayscale-100 opacity-75">
+                                    <Logo23andMe className="h-12 w-auto " />
+                                    <LogoMyHeritage className="h-8 w-auto" />
+                                    <LogoAncestry className="h-6 w-auto" />
+                                </div>
+                            </footer>
                         </div>
                     </div>
+
                 </div>
+
+
             </div>
+
+
         </section>
     );
 }

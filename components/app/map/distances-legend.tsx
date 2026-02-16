@@ -93,7 +93,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
           <span className="text-[10px] font-semibold text-muted-foreground">
             Closest Matches
           </span>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-0">
             {topMatches.map((sample) => {
               const itemId = sample['id'] as string;
               const isSelected = hoveredId === itemId;
@@ -106,7 +106,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                   onMouseLeave={handleMouseLeave}
                   onClick={() => handleJumpTo(sample)}
                   className={cn(
-                    "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200",
+                    "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200 py-1",
                     isDimmed ? "opacity-30 scale-[0.98]" : "opacity-100 scale-100"
                   )}
                 >
@@ -126,7 +126,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                     "font-mono font-bold px-1 rounded transition-colors",
                     isSelected ? "bg-blue-600 text-white" : "text-blue-600 bg-blue-50"
                   )}>
-                    {sample.distance?.toFixed(4)}
+                    {sample.distance < 10 ? sample.distance?.toFixed(4) : 'N/A'}
                   </span>
                 </div>
               );
@@ -134,6 +134,8 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
           </div>
         </div>
       )}
+
+      <span className='text-muted-foreground text-[10px] italic '>Lower values indicated closer genetic proximity to the reference sample</span>
     </Card>
   );
 }
