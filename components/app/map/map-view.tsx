@@ -22,6 +22,7 @@ import { DistanceLegend } from './distances-legend'
 export default function MapView({ data }: { data: any[] }) {
     const { mapRef, mapContainerRef, activeTheme, setActiveTheme } = useMapInstance();
     const { geojsonData, handleCalculateDists, resetData } = useMapData(data);
+    console.log('data', geojsonData)
     const {
         selectedSample, setSelectedSample, targetSample,
         mapMode, setMapMode, selectedCulture,

@@ -99,10 +99,24 @@ export function useMapSync({
             ]);
         };
 
+        const attemptSync = () => {
+            if (map.isStyleLoaded() && map.getStyle()) {
+                syncMap();
+            }
+        };
+
+        // 1. If it's ready now (First load/Data change), run it.
         if (map.isStyleLoaded()) {
-            syncMap();
-        } else {
-            map.once('idle', syncMap);
+            attemptSync();
         }
+
+        // 2. Listen for the 'idle' event. 
+        // 'idle' is the most stable event to use after a theme swap 
+        // because it guarantees the style is fully applied and the map is stable.
+        map.on('idle', attemptSync);
+
+        return () => {
+            map.off('idle', attemptSync);
+        };
     }, [geojsonData, mapMode, targetSample, selectedCulture, activeTheme, hoveredId, mapRef]);
 }
