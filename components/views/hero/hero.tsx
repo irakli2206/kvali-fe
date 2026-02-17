@@ -148,7 +148,7 @@ function Hero({ avatarList }: HeroSectionProps) {
                             <footer className="mt-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
                                 <p className="text-sm font-normal sm:px-2 px-10  text-center">Compatible with major DNA providers</p>
 
-                                <div className="flex items-center gap-8 grayscale-100 opacity-75">
+                                <div className="flex items-center gap-8 grayscale-100 brightness-150 opacity-75 contrast-50">
                                     <Logo23andMe className="h-12 w-auto " />
                                     <LogoMyHeritage className="h-8 w-auto" />
                                     <LogoAncestry className="h-6 w-auto" />

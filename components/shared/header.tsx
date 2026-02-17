@@ -108,7 +108,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
 
                 {/* Desktop CTA */}
                 <div className="flex gap-4">
-                    <CTAButton className="hidden lg:flex" />
+                    {/* <CTAButton className="hidden lg:flex" /> */}
 
                     <div className="lg:hidden">
                         <Sheet open={isOpen} onOpenChange={setIsOpen}>

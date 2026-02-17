@@ -55,7 +55,7 @@
   --popover-foreground: oklch(0.141 0.005 285.823);
   
   /* Facebook Blue: Shifted Hue to ~250 and increased Chroma */
-  --primary: oklch(0.55 0.19 252.5); 
+  --primary: oklch(0.6346 0.1975 258.17); 
   --primary-foreground: oklch(0.98 0.01 250);
   
   --secondary: oklch(0.967 0.001 286.375);
