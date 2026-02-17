@@ -86,11 +86,23 @@ export function useMapSync({
                 isAnyHovered ? 0.3 : 1
             ]);
 
-            map.setLayoutProperty('ancient-points', 'circle-sort-key', [
+
+            const sortKeyLogic = [
                 'case',
-                ['==', ['get', 'id'], safeHoverId], 2,
-                1
-            ]);
+                ['==', ['get', 'id'], safeHoverId], 3, // Hovered always on top
+                ['all',
+                    ['==', mapMode, 'distance'],
+                    ['has', 'distance'],
+                    ['<', ['get', 'distance'], 1000] // Assuming 1000 is your "too far/grey" threshold
+                ], 2,
+                ['all',
+                    ['==', mapMode, 'ydna'],
+                    ['!=', ['get', 'YDNA_Haplogroup'], 'Unknown'] // Lift YDNA samples if they aren't unknown
+                ], 2,
+                1 // Default base level
+            ];
+
+            map.setLayoutProperty('ancient-points', 'circle-sort-key', sortKeyLogic as any);
 
             map.setPaintProperty('ancient-points', 'circle-radius', [
                 'case',

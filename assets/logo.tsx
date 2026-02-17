@@ -1,6 +1,6 @@
 import React from 'react';
 
-const KvaliLogo = ({ className }) => {
+const KvaliLogo = ({ className }: { className: string }) => {
   return (
     <svg
       width="140"
