@@ -81,7 +81,7 @@ export default function MapPopup({ sample, handleCalculateDists, onClose }: { sa
             </main>
 
             <footer className="flex flex-col gap-2 p-4 pt-0">
-                <Button variant='secondary' onClick={() => handleCalculateDists(data)} >Calculate Distances</Button>
+                <Button variant='default' onClick={() => handleCalculateDists(data)} >Calculate Distances</Button>
             </footer>
 
         </div>

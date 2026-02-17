@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Logo from '@/assets/kvali logo.png'
+import KvaliLogo from '@/assets/logo'
 
 const AuthHeader = () => {
 
@@ -13,7 +14,7 @@ const AuthHeader = () => {
 
 
             <Link href='/'>
-                <Image src={Logo} alt='' width={128} height={128} className='h-8 w-auto absolute left-1/2 -translate-x-1/2 top-4' />
+                <KvaliLogo className="h-8 w-auto" />
             </Link>
         </div>
     )

@@ -1,4 +1,4 @@
-import { MapMode, Sample } from '@/types';
+import { MapMode, MapTheme, Sample } from '@/types';
 import { create } from 'zustand'
 
 // Define the shape of your Sample based on your CSV keys
@@ -19,6 +19,8 @@ interface MapState {
     setSelectedCulture: (culture: string | null) => void
     hoveredId: string | null
     setHoveredId: (id: string | null) => void
+    activeTheme: MapTheme
+    setActiveTheme: (theme: MapTheme) => void
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -35,5 +37,7 @@ export const useMapStore = create<MapState>((set) => ({
     selectedCulture: null,
     setSelectedCulture: (culture) => set({ selectedCulture: culture }),
     hoveredId: null,
-    setHoveredId: (id) => set({hoveredId: id})
+    setHoveredId: (id) => set({hoveredId: id}),
+    activeTheme: 'Light-V11',
+    setActiveTheme: (theme) => set({activeTheme: theme})
 }))

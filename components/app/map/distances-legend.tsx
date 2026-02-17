@@ -29,7 +29,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
   const topMatches = [...mapData]
     .filter(s => s['id'] !== targetSample['id'] && s.distance !== undefined)
     .sort((a, b) => (a.distance) - (b.distance))
-    .slice(0, 10);
+    .slice(0, 20);
 
   // We only update the store. useMapSync will handle the visual change on the map.
   const handleMouseEnter = (id: string) => {
@@ -126,7 +126,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                     "font-mono font-bold px-1 rounded transition-colors",
                     isSelected ? "bg-blue-600 text-white" : "text-blue-600 bg-blue-50"
                   )}>
-                    {sample.distance < 10 ? sample.distance?.toFixed(4) : 'N/A'}
+                    {sample.distance < 20 ? sample.distance?.toFixed(4) : 'N/A'}
                   </span>
                 </div>
               );

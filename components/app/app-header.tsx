@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import React from 'react'
-import Logo from '@/assets/kvali logo.png'
 import { Field, FieldLabel } from "@/components/ui/field"
 import {
     InputGroup,
@@ -41,6 +40,7 @@ import Link from 'next/link'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
 import { CultureSearch } from './map/culture-search'
 import { signout } from '@/app/(auth)/actions'
+import KvaliLogo from '@/assets/logo'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
@@ -60,7 +60,7 @@ const AppHeader = ({ samples }: any) => {
         <div className='w-full flex justify-between gap-4 min-h-8'>
             <section>
                 <Link href="/">
-                    <Image src={Logo} alt='' width={128} height={128} className='h-8 w-fit' />
+                    <KvaliLogo className="h-8 w-auto" />
                 </Link>
             </section>
 

@@ -83,7 +83,7 @@ export function useMapSync({
             map.setPaintProperty('ancient-points', 'circle-opacity', [
                 'case',
                 ['==', ['get', 'id'], safeHoverId], 1.0,
-                isAnyHovered ? 0.15 : 0.8
+                isAnyHovered ? 0.3 : 1
             ]);
 
             map.setLayoutProperty('ancient-points', 'circle-sort-key', [

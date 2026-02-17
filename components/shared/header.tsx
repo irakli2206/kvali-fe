@@ -24,6 +24,7 @@ import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link"
 import CTAButton from "../ui/cta-button";
+import KvaliLogo from "@/assets/logo";
 
 export type NavigationSection = {
     title: string;
@@ -82,7 +83,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                 <div>
                     <a href="#">
                         {/* <Logo className="gap-3" /> */}
-                        <Image src={Logo2} alt='' className="h-10 w-auto" width={128} height={128} />
+                        <KvaliLogo  className="h-10 w-auto"/>
                     </a>
 
                 </div>
@@ -129,7 +130,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                             >
                                 <div className="flex items-center justify-between p-6">
                                     <a href="#">
-                                        <Logo className="gap-2" />
+                                        <KvaliLogo className="gap-2" />
                                     </a>
                                     <SheetClose>
                                         <div className="rounded-full border border-border p-2.5">
