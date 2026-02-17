@@ -12,8 +12,17 @@ interface DistanceLegendProps {
   mapData: Array<Sample & { distance: number }>;
 }
 
+const getDistanceBlue = (distance: number) => {
+  if (distance === undefined) return '#d6d3d1'; 
+  if (distance <= 0.02) return '#1d4ed8'; // 0.00 - 0.02
+  if (distance <= 0.04) return '#1d4ed8'; // 0.02 - 0.04
+  if (distance <= 0.06) return '#2563eb'; // 0.04 - 0.06
+  if (distance <= 0.08) return '#3b82f6'; // 0.06 - 0.08
+  if (distance <= 0.10) return '#93c5fd'; // 0.08 - 0.10
+  return '#d6d3d1';                       // 0.10+
+};
+
 export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
-  // Use the global store for hover state so the map can "see" it
   const { 
     mapMode, 
     targetSample, 
@@ -31,7 +40,6 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
     .sort((a, b) => (a.distance) - (b.distance))
     .slice(0, 20);
 
-  // We only update the store. useMapSync will handle the visual change on the map.
   const handleMouseEnter = (id: string) => {
     setHoveredId(id);
   };
@@ -54,7 +62,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
   };
 
   return (
-    <Card className="absolute top-2 left-2 p-3 w-64 bg-white rounded-md border shadow-none animate-in slide-in-from-right-5 flex flex-col gap-3 z-10">
+    <Card className="absolute max-h-full top-2 left-2 p-3 w-64 bg-white rounded-md border shadow-none animate-in slide-in-from-right-5 flex flex-col gap-3 z-10">
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-muted-foreground">
@@ -79,7 +87,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
         </div>
 
         <div className="mt-3">
-          <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-[#172554] via-[#3b82f6] to-[#dbeafe]" />
+          <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-[#1d4ed8] via-[#3b82f6] to-[#dbeafe]" />
           <div className="flex justify-between text-[9px] font-mono text-stone-500 mt-1">
             <span>0.00</span>
             <span>0.05</span>
@@ -98,6 +106,9 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
               const itemId = sample['id'] as string;
               const isSelected = hoveredId === itemId;
               const isDimmed = hoveredId !== null && !isSelected;
+              
+              // Call the helper here
+              const currentHue = getDistanceBlue(sample.distance);
 
               return (
                 <div
@@ -106,15 +117,19 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                   onMouseLeave={handleMouseLeave}
                   onClick={() => handleJumpTo(sample)}
                   className={cn(
-                    "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200 py-1",
-                    isDimmed ? "opacity-30 scale-[0.98]" : "opacity-100 scale-100"
+                    "flex items-center justify-between text-[10px] cursor-pointer transition-all duration-200 py-1 px-1 rounded-sm",
+                    isDimmed ? "opacity-30 scale-[0.98]" : "opacity-100 scale-100",
+                    isSelected ? "bg-stone-50" : ""
                   )}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <div className={cn(
-                      "shrink-0 w-1.5 h-1.5 mx-1 rounded-full transition-colors",
-                      isSelected ? "bg-blue-600 scale-125" : "bg-[#172554]"
-                    )} />
+                    <div 
+                      className={cn(
+                        "shrink-0 w-1.5 h-1.5 mx-1 rounded-full transition-all",
+                        isSelected && "scale-125"
+                      )} 
+                      style={{ backgroundColor: currentHue }} // Dynamic hue for the dot
+                    />
                     <span className={cn(
                       "truncate font-medium transition-colors",
                       isSelected ? "text-blue-600" : "text-stone-700"
@@ -122,10 +137,16 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                       {`${sample.Simplified_Culture} (${sample['Object-ID']})`}
                     </span>
                   </div>
-                  <span className={cn(
-                    "font-mono font-bold px-1 rounded transition-colors",
-                    isSelected ? "bg-blue-600 text-white" : "text-blue-600 bg-blue-50"
-                  )}>
+                  <span 
+                    className={cn(
+                        "font-mono font-bold px-1 rounded transition-colors",
+                        isSelected ? "text-white" : ""
+                    )}
+                    style={{ 
+                        backgroundColor: isSelected ? currentHue : `${currentHue}15`, // Tinted bg
+                        color: isSelected ? 'white' : currentHue // Text matches hue
+                    }}
+                  >
                     {sample.distance < 20 ? sample.distance?.toFixed(4) : 'N/A'}
                   </span>
                 </div>

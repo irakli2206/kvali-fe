@@ -86,7 +86,7 @@ export default function MapView({ data }: { data: any[] }) {
             </div>
 
             {mapMode === 'ydna' && <div className='absolute top-2 left-2 w-fit'><YDNAFilter /></div>}
-            <div className='absolute bottom-4 w-full'><TimeWindowController /></div>
+            <div className='absolute top-2 w-full'><TimeWindowController /></div>
 
             {popupContainer && selectedSample && createPortal(
                 <MapPopup sample={selectedSample} handleCalculateDists={handleCalculateDists} onClose={closePopup} />,

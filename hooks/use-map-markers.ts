@@ -34,7 +34,7 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
 
         // 2. Handle Camera
-        map.flyTo({ center: [lng, lat - 1], zoom: 5, essential: true });
+        map.flyTo({ center: [lng, lat - 2], zoom: map.getZoom() < 5 ? 5 : map.getZoom(), essential: true, });
 
         // 3. Handle Popup
         if (popupRef.current) {

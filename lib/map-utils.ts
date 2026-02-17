@@ -147,11 +147,12 @@ export const distanceColors = [
     'interpolate',
     ['linear'],
     ['get', 'distance'],
-    0, '#172554',      // 0.00: Blue-950 (Absolute closest)
-    0.025, '#1e40af',  // 0.025: Blue-800
-    0.05, '#3b82f6',   // 0.05: Blue-500 (The "Sweet Spot")
-    0.075, '#93c5fd',  // 0.075: Blue-300
-    0.1, '#d6d3d1'     // 0.10+: Blue-100 (Distant - visible but receding)
+    0, '#1d4ed8',      
+    0.02, '#1d4ed8', 
+    0.04, '#2563eb',
+    0.06, '#3b82f6',   
+    0.08, '#93c5fd', 
+    0.1, '#d6d3d1' 
 ];
 
 
