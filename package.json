@@ -9,7 +9,8 @@
     "lint": "eslint"
   },
   "overrides": {
-    "zod": "$zod"
+    "zod": "$zod",
+    "ajv": "^8.18.0"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
@@ -19,6 +20,7 @@
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-form-nextjs": "^1.28.0",
     "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "@tanstack/react-virtual": "^3.13.18",
     "@tanstack/zod-form-adapter": "^0.42.1",
     "@types/mapbox-gl": "^3.4.1",

@@ -20,11 +20,9 @@ import {
 } from "@/components/ui/popover"
 import { useMapStore } from "@/store/use-map-store"
 import { getSampleDetails } from "@/lib/api/samples"
-import { Sample } from "@/types"
+import { MapSample } from "@/types"
 
-
-
-export function LargeSampleSearch({ samples = [] }: { samples: Sample[] }) {
+export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
     const [open, setOpen] = React.useState(false)
     const [search, setSearch] = React.useState("")
 

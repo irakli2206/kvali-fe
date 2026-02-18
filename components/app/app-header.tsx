@@ -41,9 +41,11 @@ import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMe
 import { CultureSearch } from './map/culture-search'
 import { signout } from '@/app/(auth)/actions'
 import KvaliLogo from '@/assets/logo'
-import UploadDNA from '../views/map/upload-dna'
+import UploadDNASheet from '../views/map/upload-dna-sheet'
+import { useMapSamples } from '@/hooks/use-map-samples'
 
-const AppHeader = ({ samples }: any) => {
+export default function AppHeader() {
+    const { data: samples = [] } = useMapSamples()
     const [open, setOpen] = React.useState(false)
     const { resetData } = useMapStore((state) => state);
 
@@ -65,12 +67,10 @@ const AppHeader = ({ samples }: any) => {
 
             <section className='flex gap-2'>
                 <Button variant='secondary' onClick={() => { resetData() }}>Reset Map</Button>
-                <UploadDNA />
+                <UploadDNASheet />
                 {/* <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button> */}
             </section>
         </div>
     )
 }
-
-export default AppHeader
 

@@ -21,11 +21,11 @@ import { useMapStore } from '@/store/use-map-store'
 import { parseG25ToVector } from '@/lib/g25-utils'
 import { Dna } from 'lucide-react'
 
-type UploadDNAProps = {
+type UploadDNASheetProps = {
     trigger?: React.ReactNode
 }
 
-export default function UploadDNA({ trigger }: UploadDNAProps) {
+export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const { loading, error, k36Results, g25String, upload, reset } = useUploadPipeline()
     const setUserG25Vector = useMapStore((s) => s.setUserG25Vector)
@@ -46,7 +46,7 @@ export default function UploadDNA({ trigger }: UploadDNAProps) {
                     </Button>
                 )}
             </SheetTrigger>
-            <SheetContent side="right" className="sm:max-w-md overflow-y-auto">
+            <SheetContent side="right" className="sm:max-w-md  overflow-y-auto">
                 <SheetHeader>
                     <SheetTitle>Upload Raw DNA</SheetTitle>
                     <SheetDescription>
@@ -54,7 +54,7 @@ export default function UploadDNA({ trigger }: UploadDNAProps) {
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className="flex flex-col gap-6 py-4">
+                <div className="flex flex-col gap-6 p-4">
                     <div className="space-y-2">
                         <Label htmlFor="dna-file">Raw DNA file</Label>
                         <Input
@@ -131,7 +131,7 @@ export default function UploadDNA({ trigger }: UploadDNAProps) {
                 </div>
 
                 <SheetFooter className="flex-row justify-start sm:justify-start">
-                    <Button variant="ghost" onClick={() => reset()}>
+                    <Button variant="destructive" onClick={() => reset()}>
                         Start over
                     </Button>
                 </SheetFooter>

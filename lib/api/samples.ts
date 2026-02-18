@@ -30,9 +30,8 @@ export async function getMapSamples() {
             .csv()
 
         //@ts-ignore
-        const csvSize = Buffer.byteLength(data);
-
-        console.log(`CSV size: ${(csvSize / 1024).toFixed(2)} KB`);
+        const sizeBytes = new Blob([data]).size
+        console.log('getMapSamples response:', (sizeBytes / 1024).toFixed(1), 'KB')
 
         if (error) {
             console.error("Map Fetch Error:", error.message)
@@ -81,6 +80,9 @@ export async function getSampleDetails(id: string) {
             .eq('id', id)
             .single()
 
+        const sizeBytes = new Blob([data]).size
+        console.log('getSampleDetails response:', (sizeBytes / 1024).toFixed(1), 'KB')
+
         if (error) {
             console.error("Detail Fetch Error:", error.message)
             return { data: null, error: error.message }
@@ -98,6 +100,10 @@ export async function calculateDistances(sample: Sample) {
         //@ts-ignore
         target_vector: sample.g25_vector
     });
+
+    const sizeBytes = new Blob([data]).size
+    console.log('calculateDistances response:', (sizeBytes / 1024).toFixed(1), 'KB')
+
     console.log('error', error)
     return data
 }
@@ -108,6 +114,9 @@ export async function calculateDistancesFromVector(vector: number[]) {
         //@ts-ignore
         target_vector: vector
     });
+    const sizeBytes = new Blob([data]).size
+    console.log('calculateDistancesFromVector response:', (sizeBytes / 1024).toFixed(1), 'KB')
+
     if (error) console.error('calculateDistancesFromVector error:', error)
     return data
 }
