@@ -9,6 +9,9 @@ interface MapState {
     setSelectedSample: (sample: Sample | null) => void;
     targetSample: Sample | null;
     setTargetSample: (sample: Sample | null) => void;
+    /** Trigger distance calc with user's G25 vector. Set to run, then cleared by consumer. */
+    userG25Vector: number[] | null;
+    setUserG25Vector: (v: number[] | null) => void;
     mapMode: MapMode;
     setMapMode: (mapMode: MapMode) => void
     timeWindow: [number, number]
@@ -21,6 +24,7 @@ interface MapState {
     setHoveredId: (id: string | null) => void
     activeTheme: MapTheme
     setActiveTheme: (theme: MapTheme) => void
+    resetData: () => void
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -28,6 +32,8 @@ export const useMapStore = create<MapState>((set) => ({
     setSelectedSample: (sample) => set({ selectedSample: sample }),
     targetSample: null,
     setTargetSample: (sample) => set({ targetSample: sample }),
+    userG25Vector: null,
+    setUserG25Vector: (v) => set({ userG25Vector: v }),
     mapMode: 'neutral',
     setMapMode: (mapMode) => set({ mapMode: mapMode }),
     timeWindow: [-50000, 2000],
@@ -37,7 +43,17 @@ export const useMapStore = create<MapState>((set) => ({
     selectedCulture: null,
     setSelectedCulture: (culture) => set({ selectedCulture: culture }),
     hoveredId: null,
-    setHoveredId: (id) => set({hoveredId: id}),
+    setHoveredId: (id) => set({ hoveredId: id }),
     activeTheme: 'Light-V11',
-    setActiveTheme: (theme) => set({activeTheme: theme})
+    setActiveTheme: (theme) => set({ activeTheme: theme }),
+    resetData: () => set({
+        selectedSample: null,
+        targetSample: null,
+        mapMode: 'neutral',
+        timeWindow: [-50000, 2000],
+        selectedYDNA: [],
+        selectedCulture: null,
+        hoveredId: null,
+        activeTheme: 'Light-V11'
+    })
 }))

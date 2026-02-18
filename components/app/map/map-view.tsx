@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useMapStore } from '@/store/use-map-store'
@@ -11,8 +10,6 @@ import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMe
 import MapPopup from './popup'
 import TimeWindowController from './time-window-controller'
 import { YDNAFilter } from './ydna-filter'
-
-// Hooks
 import { useMapInstance } from '@/hooks/use-map-instance'
 import { useMapData } from '@/hooks/use-map-data'
 import { useMapMarkers } from '@/hooks/use-map-markers'
@@ -20,36 +17,23 @@ import { useMapSync } from '@/hooks/use-map-sync'
 import { DistanceLegend } from './distances-legend'
 
 export default function MapView({ data }: { data: any[] }) {
-    const { mapRef, mapContainerRef, activeTheme, setActiveTheme } = useMapInstance();
+    const { mapRef, mapContainerRef, activeTheme, setActiveTheme, isMapReady } = useMapInstance();
     const { geojsonData, handleCalculateDists, resetData } = useMapData(data);
-    console.log('data', geojsonData)
     const {
         selectedSample, setSelectedSample, targetSample,
         mapMode, setMapMode, selectedCulture,
         hoveredId
     } = useMapStore();
 
-    // The logic is now fully encapsulated in these three hooks
     useMapSync({ mapRef, geojsonData: geojsonData as any, mapMode, targetSample, selectedCulture, activeTheme, hoveredId });
     const { popupContainer, closePopup } = useMapMarkers(mapRef, geojsonData);
 
-    // Only one side-effect left: the click listener
-    useEffect(() => {
-        const map = mapRef.current;
-        if (!map) return;
-        const handlePointClick = (e: any) => {
-            const feature = e.features?.[0];
-            if (feature) setSelectedSample(feature.properties);
-        };
-        map.on('click', 'ancient-points', handlePointClick);
-        return () => { map.off('click', 'ancient-points', handlePointClick); };
-    }, [setSelectedSample, mapRef]);
 
     return (
         <div className="relative w-full h-full bg-[#f8f8f8] overflow-hidden">
             <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
-            {mapRef.current && mapMode === 'distance' && (
+            {isMapReady && mapMode === 'distance' && (
                 <DistanceLegend
                     mapRef={mapRef}
                     mapData={geojsonData.features.map(f => ({
@@ -86,7 +70,7 @@ export default function MapView({ data }: { data: any[] }) {
             </div>
 
             {mapMode === 'ydna' && <div className='absolute top-2 left-2 w-fit'><YDNAFilter /></div>}
-            <div className='absolute top-2 w-full'><TimeWindowController /></div>
+            <TimeWindowController />
 
             {popupContainer && selectedSample && createPortal(
                 <MapPopup sample={selectedSample} handleCalculateDists={handleCalculateDists} onClose={closePopup} />,

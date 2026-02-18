@@ -2,6 +2,12 @@
  * Logic extracted from Vahaduo legacy for G25 coordinate processing
  */
 
+/** Parse G25 string to raw coordinate array. Handles "label,0.1,0.2,..." or "0.1,0.2,..." */
+export const parseG25ToVector = (input: string): number[] => {
+    const parts = input.trim().split(',').map(p => p.trim());
+    return parts.map(p => parseFloat(p)).filter(n => !isNaN(n));
+};
+
 export const parseG25 = (input: string) => {
     return input.split('\n')
         .filter(line => line.trim() && line.includes(','))

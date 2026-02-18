@@ -41,20 +41,14 @@ import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMe
 import { CultureSearch } from './map/culture-search'
 import { signout } from '@/app/(auth)/actions'
 import KvaliLogo from '@/assets/logo'
+import UploadDNA from '../views/map/upload-dna'
 
 const AppHeader = ({ samples }: any) => {
     const [open, setOpen] = React.useState(false)
-    const { setTargetSample, setSelectedCulture, setSelectedSample, setSelectedYDNA, setMapMode, setTimeWindow } = useMapStore((state) => state);
+    const { resetData } = useMapStore((state) => state);
 
 
-    const resetMap = () => {
-        setTargetSample(null)
-        setMapMode('neutral')
-        setSelectedCulture(null)
-        setSelectedSample(null)
-        setSelectedYDNA([])
-        setTimeWindow([-50000, 2000])
-    }
+
 
     return (
         <div className='w-full flex justify-between gap-4 min-h-8'>
@@ -70,7 +64,8 @@ const AppHeader = ({ samples }: any) => {
             </section>
 
             <section className='flex gap-2'>
-                <Button variant='secondary' onClick={() => { resetMap() }}>Reset Map</Button>
+                <Button variant='secondary' onClick={() => { resetData() }}>Reset Map</Button>
+                <UploadDNA />
                 {/* <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button> */}
             </section>
         </div>

@@ -97,7 +97,7 @@ export function useMapSync({
                 ], 2,
                 ['all',
                     ['==', mapMode, 'ydna'],
-                    ['!=', ['get', 'YDNA_Haplogroup'], 'Unknown'] // Lift YDNA samples if they aren't unknown
+                    ['!=', ['get', 'Y-Symbol'], 'Unknown'] // Lift YDNA samples if they aren't unknown
                 ], 2,
                 1 // Default base level
             ];

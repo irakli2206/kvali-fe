@@ -94,14 +94,20 @@ export async function getSampleDetails(id: string) {
 
 export async function calculateDistances(sample: Sample) {
     const supabase = await createClient()
-
-
-    // 2. Pass the array directly
     const { data, error } = await supabase.rpc('calculate_distances', {
         //@ts-ignore
         target_vector: sample.g25_vector
     });
-
     console.log('error', error)
+    return data
+}
+
+export async function calculateDistancesFromVector(vector: number[]) {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('calculate_distances', {
+        //@ts-ignore
+        target_vector: vector
+    });
+    if (error) console.error('calculateDistancesFromVector error:', error)
     return data
 }

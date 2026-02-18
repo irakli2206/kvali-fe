@@ -3,7 +3,13 @@ import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import { csvToGeoJSON } from '@/lib/map-utils';
 import { useMapStore } from '@/store/use-map-store';
 import { Sample } from '@/types';
-import { calculateDistances } from '@/lib/api/samples';
+import { calculateDistances, calculateDistancesFromVector } from '@/lib/api/samples';
+
+const USER_SAMPLE: Partial<Sample> = {
+    id: 'user',
+    'Object-ID': 'You',
+    Simplified_Culture: 'Your DNA',
+};
 
 export function useMapData(initialData: any[]) {
     const [mapData, setMapData] = useState(initialData);
@@ -14,8 +20,10 @@ export function useMapData(initialData: any[]) {
         selectedYDNA,
         targetSample,
         setTargetSample,
-        selectedCulture,   // Pull this from store
-        setSelectedCulture
+        selectedCulture,
+        setSelectedCulture,
+        userG25Vector,
+        setUserG25Vector,
     } = useMapStore();
 
     // Sync local state if initialData arrives late (e.g. from an async fetch)
@@ -69,12 +77,40 @@ export function useMapData(initialData: any[]) {
 
         console.log(`Filtered from ${baseGeoJSON.features.length} to ${filteredFeatures.length} points`);
         return { ...baseGeoJSON, features: filteredFeatures } as FeatureCollection<Geometry, GeoJsonProperties>;
-    }, [mapData, timeWindow, mapMode, selectedYDNA, targetSample]);
+    }, [mapData, timeWindow, mapMode, selectedYDNA]);
+
+    useEffect(() => {
+        const vector = userG25Vector;
+        if (!vector?.length) return;
+
+        setUserG25Vector(null);
+
+        const run = async () => {
+            const topMatches: Partial<Sample & { distance: number }>[] = await calculateDistancesFromVector(vector);
+            const DISTANCE_NO_MATCH = 1000;
+            if (!topMatches) return;
+
+            setSelectedCulture(null);
+            setTargetSample({ ...USER_SAMPLE, g25_vector: vector } as Sample);
+
+            const distanceMap = new Map(topMatches.map(item => [item.id, item.distance]));
+            const mergedData = initialData.map((originalSample: any) => {
+                if (distanceMap.has(originalSample.id)) {
+                    return { ...originalSample, distance: distanceMap.get(originalSample.id) };
+                }
+                return { ...originalSample, distance: DISTANCE_NO_MATCH };
+            });
+
+            setMapData(mergedData);
+            setMapMode('distance');
+        };
+        run();
+    }, [userG25Vector, setUserG25Vector, setSelectedCulture, setTargetSample, setMapMode, initialData]);
 
     const handleCalculateDists = async (target: Sample) => {
         // 1. Get the Top 200 from the DB (Fast! ~100-150ms)
         const topMatches: Partial<Sample & { distance: number }>[] = await calculateDistances(target);
-
+        const DISTANCE_NO_MATCH = 1000;
         if (!topMatches) return;
 
         setSelectedCulture(null);
@@ -95,7 +131,7 @@ export function useMapData(initialData: any[]) {
             // Otherwise, it stays in the dataset but gets 0 (or undefined)
             return {
                 ...originalSample,
-                distance: 10
+                distance: DISTANCE_NO_MATCH
             };
         });
 

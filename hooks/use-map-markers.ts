@@ -12,7 +12,7 @@ const parseCoords = (val: string | number) =>
     typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
 
 export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geojsonData: any) {
-    const { selectedSample, selectedCulture } = useMapStore()
+    const { selectedSample, selectedCulture, setSelectedSample } = useMapStore()
 
     const [popupContainer, setPopupContainer] = useState<HTMLDivElement | null>(null);
     const pingRef = useRef<mapboxgl.Marker | null>(null);
@@ -34,7 +34,7 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
 
         // 2. Handle Camera
-        map.flyTo({ center: [lng, lat - 2], zoom: map.getZoom() < 5 ? 5 : map.getZoom(), essential: true, });
+        map.flyTo({ center: [lng, lat - 0], zoom: map.getZoom() < 5 ? 5 : map.getZoom(), essential: true, });
 
         // 3. Handle Popup
         if (popupRef.current) {
@@ -73,6 +73,19 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
 
     useEffect(() => {
         const map = mapRef.current;
+        if (!map) return;
+        const handlePointClick = (e: any) => {
+            const feature = e.features?.[0];
+            if (feature) {
+                setSelectedSample(feature.properties);
+            }
+        };
+        map.on('click', 'ancient-points', handlePointClick);
+        return () => { map.off('click', 'ancient-points', handlePointClick); };
+    }, [mapRef]);
+
+    useEffect(() => {
+        const map = mapRef.current;
         if (!map || !selectedCulture || !geojsonData) return;
 
         // Find the first sample that belongs to this culture
@@ -93,7 +106,7 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
     const closePopup = () => {
         if (popupRef.current) {
             popupRef.current.remove();
-
+            setSelectedSample(null);
         }
     };
 

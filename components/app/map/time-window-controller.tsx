@@ -9,7 +9,7 @@ const TimeWindowController = () => {
 
 
     return (
-        <div className="mx-auto grid w-full max-w-3xl bg-background border  px-4 py-2 rounded-sm gap-3">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 mx-auto min-w-xl max-w-2xl bg-background border flex flex-col px-4 py-2 rounded-sm gap-3">
             <div className="flex items-center justify-between gap-2 ">
                 <Label htmlFor="slider-demo-temperature" className='text-xs'>Time Range</Label>
                 <span className="text-muted-foreground text-xs">
