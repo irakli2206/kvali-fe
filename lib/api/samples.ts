@@ -42,7 +42,17 @@ export async function getMapSamples() {
         const sizeBytes = new Blob([data]).size
         console.log('getMapSamples response:', (sizeBytes / 1024).toFixed(1), 'KB')
 
-        const parsed: Papa.ParseResult<Record<string, string>> = Papa.parse(data, {
+        type MapRow = {
+            id: string
+            object_id: string
+            latitude: string
+            longitude: string
+            culture: string
+            y_haplo: string
+            mean_bp: string
+        }
+
+        const parsed: Papa.ParseResult<MapRow> = Papa.parse(data, {
             header: true,
             dynamicTyping: false,
             skipEmptyLines: true

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getSampleDetails } from "@/lib/api/samples"
 import { Sample } from "@/types"
 import { useQuery } from "@tanstack/react-query"
-import { X, Clock, ClockFading, Dna, Grid2X2X, VenusAndMars, LucideIcon } from "lucide-react"
+import { X, Clock, ClockFading, Dna, Grid2X2X, VenusAndMars, LucideIcon, ExternalLink } from "lucide-react"
 import CoverageBadge from "@/components/shared/coverage-badge"
 import { Button } from "@/components/ui/button"
 import { ReactNode } from "react"
@@ -100,18 +100,29 @@ const getPopupContent = (data: Sample) => {
         {
             icon: Dna,
             label: 'Y-DNA',
-            value: data.y_haplo ?? null
+            value: (() => {
+                const val = data.y_haplo
+                if (!val || val.toLowerCase().startsWith('n/a')) return null
+                return <HaploLink label={val} href={data.y_symbol ? `https://www.yfull.com/tree/${data.y_symbol}/` : null} />
+            })()
         },
         {
             icon: Dna,
             label: 'mtDNA',
-            value: data.mt_haplo ?? null
+            value: data.mt_haplo ? (
+                <HaploLink label={data.mt_haplo} href={`https://www.yfull.com/mtree/${data.mt_haplo}/`} />
+            ) : null
         },
         {
             icon: Grid2X2X,
             label: 'SNPs (1240K)',
             value: data.snps_1240k ? (
-                <CoverageBadge coverage={String(data.snps_1240k)} />
+                <CoverageBadge
+                    coverage={String(data.snps_1240k)}
+                    greenThreshold={500_000}
+                    yellowThreshold={100_000}
+                    formatValue={(v) => v.toLocaleString()}
+                />
             ) : null
         },
     ]
@@ -121,6 +132,21 @@ type MapPopupRowProps = {
     icon: LucideIcon
     label: string
     value: ReactNode | string
+}
+
+const HaploLink = ({ label, href }: { label: string; href: string | null }) => {
+    if (!href) return <span>{label}</span>
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+        >
+            {label}
+            <ExternalLink className="w-3 h-3" />
+        </a>
+    )
 }
 
 const MapPopupRow = ({ icon: Icon, label, value }: MapPopupRowProps) => {

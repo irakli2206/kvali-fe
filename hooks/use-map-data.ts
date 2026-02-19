@@ -61,7 +61,7 @@ export function useMapData() {
 
             if (mapMode === 'ydna') {
                 const yHaplo = props.y_haplo
-                const isValidY = yHaplo && !['null', 'unknown', 'N/A', '', 'None', 'n/a', '..'].includes(yHaplo)
+                const isValidY = yHaplo && !yHaplo.toLowerCase().startsWith('n/a') && !['null', 'unknown', '', 'None', '..'].includes(yHaplo)
                 if (!isValidY) return false
 
                 if (selectedYDNA?.length > 0) {

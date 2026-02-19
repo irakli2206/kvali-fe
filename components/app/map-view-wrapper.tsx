@@ -17,7 +17,7 @@ export default function MapViewWrapper() {
     if (error) {
         return (
             <div className="flex h-full items-center justify-center p-8">
-                <p className="text-destructive">Failed to load map data: {error}</p>
+                <p className="text-destructive">Failed to load map data: {error.message}</p>
             </div>
         )
     }

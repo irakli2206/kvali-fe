@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/popover"
 import { useMapStore } from "@/store/use-map-store"
 import { getSampleDetails } from "@/lib/api/samples"
-import { MapSample } from "@/types"
+type SearchableSample = { id: string; object_id?: string | null; culture?: string | null }
 
-export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
+export function LargeSampleSearch({ samples = [] }: { samples: SearchableSample[] }) {
     const [open, setOpen] = React.useState(false)
     const [search, setSearch] = React.useState("")
 
