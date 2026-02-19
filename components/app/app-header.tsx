@@ -35,7 +35,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandEmpty, CommandList, CommandItem } from "@/components/ui/command"
 import { Button } from '../ui/button'
 import { LargeSampleSearch } from './map/large-sample-search'
-import { useMapStore } from "@/store/use-map-store"
 import Link from 'next/link'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
 import { CultureSearch } from './map/culture-search'
@@ -47,16 +46,15 @@ import { useMapSamples } from '@/hooks/use-map-samples'
 export default function AppHeader() {
     const { data: samples = [] } = useMapSamples()
     const [open, setOpen] = React.useState(false)
-    const { resetData } = useMapStore((state) => state);
 
 
 
 
     return (
-        <div className='w-full flex justify-between gap-4 min-h-8'>
+        <div className='w-full flex justify-between items-center gap-4'>
             <section>
                 <Link href="/">
-                    <KvaliLogo className="h-6 w-auto" />
+                    <KvaliLogo className="h-8 w-auto" />
                 </Link>
             </section>
 
@@ -66,7 +64,6 @@ export default function AppHeader() {
             </section>
 
             <section className='flex gap-2'>
-                <Button variant='secondary' onClick={() => { resetData() }}>Reset Map</Button>
                 <UploadDNASheet />
                 {/* <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button> */}
             </section>

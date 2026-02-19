@@ -83,7 +83,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                 <div>
                     <a href="#">
                         {/* <Logo className="gap-3" /> */}
-                        <KvaliLogo  className="h-8 w-auto"/>
+                        <KvaliLogo  className="h-10 w-auto"/>
                     </a>
 
                 </div>
