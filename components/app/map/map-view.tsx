@@ -42,7 +42,12 @@ export default function MapView() {
                 />
             )}
 
-            <MapControlBar onReset={resetData} />
+            <MapControlBar
+                onReset={() => {
+                    useMapStore.getState().resetData()
+                    resetData()
+                }}
+            />
 
             {popupContainer &&
                 selectedSample &&

@@ -27,7 +27,7 @@ export function YDNAFilter() {
                     aria-expanded={open}
                     className={cn(
                         buttonVariants({ variant: "outline" }),
-                        "w-[250px] justify-between h-auto min-h-10 cursor-pointer px-3 py-2"
+                        "w-[250px] justify-between   cursor-pointer px-3 py-2"
                     )}
                 >
                     <div className="flex flex-wrap gap-1">

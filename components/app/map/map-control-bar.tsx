@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimatePresence, motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { formatYear } from '@/lib/utils'
@@ -14,6 +15,7 @@ import {
     DropdownMenuRadioItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { YDNAFilter } from './ydna-filter'
 import { cn } from '@/lib/utils'
 
@@ -62,17 +64,24 @@ export function MapControlBar({ onReset }: MapControlBarProps) {
     return (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col gap-2  ">
             {/* Y-DNA haplogroup filter row when Y-DNA mode is active */}
-            {mapMode === 'ydna' && (
-                <div
-                    className={cn(
-                        'flex items-center px-4 py-2 rounded-lg border shadow-sm',
-                        'bg-background/90 backdrop-blur-sm'
-                    )}
-                >
-                    <span className="text-xs text-muted-foreground mr-2 shrink-0">Haplogroups:</span>
-                    <YDNAFilter />
-                </div>
-            )}
+            <AnimatePresence initial={false}>
+                {mapMode === 'ydna' && (
+                    <motion.div
+                        key="ydna-row"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className={cn(
+                            'flex items-center px-4 py-2 rounded-lg border shadow-sm',
+                            'bg-background/90 backdrop-blur-sm'
+                        )}
+                    >
+                        <span className="text-xs text-muted-foreground mr-2 shrink-0">Haplogroups:</span>
+                        <YDNAFilter />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
 
             <div
@@ -103,7 +112,7 @@ export function MapControlBar({ onReset }: MapControlBarProps) {
 
                 {/* Time slider (hidden when Modern) — full width on small screens, fixed width on sm+ */}
                 {showTimeSlider && (
-                    <div className="flex flex-col gap-1.5 w-full min-w-0 sm:w-[280px] sm:shrink-0">
+                    <div className="flex flex-col gap-1.5 lg:w-sm sm:shrink-0">
                         <span className="text-xs text-muted-foreground">Time range</span>
                         <Slider
                             value={timeWindow}
@@ -140,33 +149,45 @@ export function MapControlBar({ onReset }: MapControlBarProps) {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="shrink-0" aria-label="Map theme">
-                                <Map className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-36">
-                            <DropdownMenuLabel>Map theme</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={activeTheme} onValueChange={(v) => setActiveTheme(v as MapTheme)}>
-                                {THEME_OPTIONS.map((opt) => (
-                                    <DropdownMenuRadioItem key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="outline" size="icon" className="shrink-0" aria-label="Map theme">
+                                            <Map className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-36">
+                                    <DropdownMenuLabel>Map theme</DropdownMenuLabel>
+                                    <DropdownMenuRadioGroup value={activeTheme} onValueChange={(v) => setActiveTheme(v as MapTheme)}>
+                                        {THEME_OPTIONS.map((opt) => (
+                                            <DropdownMenuRadioItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </DropdownMenuRadioItem>
+                                        ))}
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <TooltipContent side="top" sideOffset={6}>Map theme</TooltipContent>
+                        </Tooltip>
 
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0"
-                        aria-label="Reset map"
-                        onClick={handleReset}
-                    >
-                        <RotateCcw className="h-4 w-4" />
-                    </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="shrink-0"
+                                    aria-label="Reset map"
+                                    onClick={handleReset}
+                                >
+                                    <RotateCcw className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={6}>Reset map</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </div>
 
