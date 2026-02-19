@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Sample } from '@/types'
 import Papa from 'papaparse';
 
-const TABLE = 'adna_v3'
+const TABLE = 'dna'
 
 function bpToCE(bp: string | null | undefined): number {
     if (!bp) return 0

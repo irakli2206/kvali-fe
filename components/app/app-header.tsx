@@ -56,7 +56,7 @@ export default function AppHeader() {
         <div className='w-full flex justify-between gap-4 min-h-8'>
             <section>
                 <Link href="/">
-                    <KvaliLogo className="h-8 w-auto" />
+                    <KvaliLogo className="h-6 w-auto" />
                 </Link>
             </section>
 
