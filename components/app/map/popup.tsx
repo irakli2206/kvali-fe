@@ -59,7 +59,7 @@ export default function MapPopup({ sample, handleCalculateDists, onClose }: { sa
                     {data.source &&
                         <div className='px-3 py-2 bg-muted rounded-sm'>
                             <p className='mb-0'>Publication</p>
-                            <p className="text-muted-foreground text-xs">{data.source}</p>
+                            <p className="text-muted-foreground text-xs">{data.doi}</p>
                         </div>
                     }
                 </aside>

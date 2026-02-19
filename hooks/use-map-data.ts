@@ -27,6 +27,7 @@ export function useMapData() {
         setSelectedCulture,
         userG25Vector,
         setUserG25Vector,
+        sampleFilter,
     } = useMapStore()
 
     useEffect(() => {
@@ -54,8 +55,12 @@ export function useMapData() {
             const props = feature.properties
             if (!props) return false
 
-            const year = parseFloat(props.mean_bp)
-            const yearCE = isNaN(year) ? NaN : 1950 - year
+            const bp = parseFloat(props.mean_bp)
+            const isAncient = !isNaN(bp) && bp > 0
+            if (sampleFilter === 'ancient' && !isAncient) return false
+            if (sampleFilter === 'modern' && isAncient) return false
+
+            const yearCE = isAncient ? 1950 - bp : NaN
             const isWithinTime = isNaN(yearCE) || (yearCE >= minYear && yearCE <= maxYear)
             if (!isWithinTime) return false
 
@@ -74,7 +79,7 @@ export function useMapData() {
         })
 
         return { ...baseGeoJSON, features: filteredFeatures } as FeatureCollection<Geometry, GeoJsonProperties>
-    }, [mapData, timeWindow, mapMode, selectedYDNA])
+    }, [mapData, timeWindow, mapMode, selectedYDNA, sampleFilter])
 
     useEffect(() => {
         const vector = userG25Vector

@@ -5,7 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useMapStore } from '@/store/use-map-store'
 import { Button } from '@/components/ui/button'
 import { Map, Settings } from 'lucide-react'
-import { MapMode, MapTheme, Sample } from '@/types'
+import { MapMode, MapTheme, Sample, SampleFilter } from '@/types'
 import {
     DropdownMenuTrigger,
     DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
     DropdownMenu,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
+    DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import MapPopup from './popup'
 import TimeWindowController from './time-window-controller'
@@ -34,6 +35,8 @@ export default function MapView() {
         setMapMode,
         selectedCulture,
         hoveredId,
+        sampleFilter,
+        setSampleFilter,
     } = useMapStore()
 
     useMapSync({
@@ -76,6 +79,16 @@ export default function MapView() {
                         >
                             <DropdownMenuRadioItem value="neutral">Neutral</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="ydna">Y-DNA</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Samples</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup
+                            value={sampleFilter}
+                            onValueChange={(v) => setSampleFilter(v as SampleFilter)}
+                        >
+                            <DropdownMenuRadioItem value="ancient">Ancient</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="modern">Modern</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="all">Both</DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>

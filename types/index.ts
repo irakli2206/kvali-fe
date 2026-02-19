@@ -17,4 +17,6 @@ export type MapSample = Omit<Sample, 'latitude' | 'longitude' | 'mean_bp'> & {
 
 export type MapMode = 'neutral' | 'ydna' | 'distance'
 
+export type SampleFilter = 'all' | 'ancient' | 'modern'
+
 export type MapTheme = 'Standard' | 'Light-V11' | 'Dark-V11'
