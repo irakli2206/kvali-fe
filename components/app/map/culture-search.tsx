@@ -31,17 +31,13 @@ export function CultureSearch({ samples = [] }: { samples: MapSample[] }) {
 
     const cultureOptions = React.useMemo(() => {
         const uniqueCultures = getUniqueCultures(samples);
-
-        // Returning objects makes it easier for Shadcn Command/Select components
         return uniqueCultures.map(culture => ({
             label: culture,
-            value: culture.toLowerCase().replace(/\s+/g, '-'), // URL/ID friendly version
+            value: culture.toLowerCase().replace(/\s+/g, '-'),
             original: culture
         }));
     }, [samples]);
 
-
-    // 1. Guard against undefined samples during filtering
     const filteredSamples = React.useMemo(() => {
         if (!cultureOptions || !Array.isArray(cultureOptions)) return []
         if (!search) return cultureOptions
@@ -50,7 +46,6 @@ export function CultureSearch({ samples = [] }: { samples: MapSample[] }) {
         return cultureOptions.filter(item => item.original.toLowerCase().includes(s))
     }, [search, cultureOptions])
 
-    // 2. Early return if samples haven't loaded yet
     if (!cultureOptions) {
         return <Button variant="outline" className="w-[300px]" disabled>Loading samples...</Button>
     }
@@ -75,7 +70,6 @@ export function CultureSearch({ samples = [] }: { samples: MapSample[] }) {
                         onValueChange={setSearch}
                     />
                     <CommandList className="max-h-none">
-                        {/* 3. Safety check on the length property */}
                         {(filteredSamples?.length ?? 0) === 0 && (
                             <CommandEmpty>No samples found.</CommandEmpty>
                         )}
@@ -90,9 +84,7 @@ export function CultureSearch({ samples = [] }: { samples: MapSample[] }) {
                                         onSelect={(currentValue) => {
                                             const selectedObj = cultureOptions.find(c => c.value === currentValue);
                                             if (selectedObj) {
-                                                // Just tell the store which culture was picked
                                                 setSelectedCulture(selectedObj.original);
-                                                // Clear the individual sample if one was selected
                                                 setSelectedSample(null);
                                             }
                                             setOpen(false);
@@ -100,7 +92,6 @@ export function CultureSearch({ samples = [] }: { samples: MapSample[] }) {
                                         className="flex flex-col items-start py-3"
                                     >
                                         <span className="font-medium text-sm">{sample.label}</span>
-
                                     </CommandItem>
                                 )}
                             />

@@ -1,13 +1,14 @@
 import { Check, ChevronsUpDown, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button" // Import this!
+import { buttonVariants } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useMapStore } from "@/store/use-map-store"
+import { YDNA_GROUP_COLORS } from "@/lib/map-utils"
 
-const YDNA_OPTIONS = ["R1b", "R1a", "I", "J", "G", "E", "N", "Q", "L", "T", "C", "O", "D"];
+const YDNA_OPTIONS = Object.keys(YDNA_GROUP_COLORS);
 
 export function YDNAFilter() {
     const [open, setOpen] = useState(false);
@@ -78,6 +79,10 @@ export function YDNAFilter() {
                                 }}
                             >
                                 <Check className={cn("mr-2 h-4 w-4", selectedYDNA.includes(option) ? "opacity-100" : "opacity-0")} />
+                                <span
+                                    className="mr-2 h-3 w-3 rounded-full shrink-0"
+                                    style={{ backgroundColor: YDNA_GROUP_COLORS[option] }}
+                                />
                                 {option}
                             </CommandItem>
                         ))}

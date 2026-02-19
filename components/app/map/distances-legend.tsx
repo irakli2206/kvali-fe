@@ -14,12 +14,12 @@ interface DistanceLegendProps {
 
 const getDistanceBlue = (distance: number) => {
   if (distance === undefined) return '#d6d3d1'; 
-  if (distance <= 0.02) return '#1d4ed8'; // 0.00 - 0.02
-  if (distance <= 0.04) return '#1d4ed8'; // 0.02 - 0.04
-  if (distance <= 0.06) return '#2563eb'; // 0.04 - 0.06
-  if (distance <= 0.08) return '#3b82f6'; // 0.06 - 0.08
-  if (distance <= 0.10) return '#93c5fd'; // 0.08 - 0.10
-  return '#d6d3d1';                       // 0.10+
+  if (distance <= 0.02) return '#1d4ed8';
+  if (distance <= 0.04) return '#1d4ed8';
+  if (distance <= 0.06) return '#2563eb';
+  if (distance <= 0.08) return '#3b82f6';
+  if (distance <= 0.10) return '#93c5fd';
+  return '#d6d3d1';
 };
 
 export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
@@ -36,7 +36,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
   if (mapMode !== 'distance' || !targetSample) return null;
 
   const topMatches = [...mapData]
-    .filter(s => s['id'] !== targetSample['id'] && s.distance !== undefined)
+    .filter(s => s.id !== targetSample.id && s.distance !== undefined)
     .sort((a, b) => (a.distance) - (b.distance))
     .slice(0, 20);
 
@@ -50,9 +50,9 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
 
   const handleJumpTo = (sample: Sample) => {
     const map = mapRef?.current;
-    if (map && sample.Longitude && sample.Latitude) {
+    if (map && sample.longitude && sample.latitude) {
       map.flyTo({
-        center: [Number(sample.Longitude), Number(sample.Latitude)],
+        center: [Number(sample.longitude), Number(sample.latitude)],
         zoom: 7,
         speed: 1.2,
         essential: true
@@ -83,7 +83,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
         </div>
 
         <div className="text-[11px] font-medium text-stone-800 truncate px-2 border-l-2 border-blue-950">
-          Ref: {targetSample.Simplified_Culture} ({targetSample['Object-ID']})
+          Ref: {targetSample.culture} ({targetSample.object_id})
         </div>
 
         <div className="mt-3">
@@ -103,11 +103,9 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
           </span>
           <div className="flex flex-col gap-0">
             {topMatches.map((sample) => {
-              const itemId = sample['id'] as string;
+              const itemId = sample.id as string;
               const isSelected = hoveredId === itemId;
               const isDimmed = hoveredId !== null && !isSelected;
-              
-              // Call the helper here
               const currentHue = getDistanceBlue(sample.distance);
 
               return (
@@ -128,13 +126,13 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                         "shrink-0 w-1.5 h-1.5 mx-1 rounded-full transition-all",
                         isSelected && "scale-125"
                       )} 
-                      style={{ backgroundColor: currentHue }} // Dynamic hue for the dot
+                      style={{ backgroundColor: currentHue }}
                     />
                     <span className={cn(
                       "truncate font-medium transition-colors",
                       isSelected ? "text-blue-600" : "text-stone-700"
                     )}>
-                      {`${sample.Simplified_Culture} (${sample['Object-ID']})`}
+                      {`${sample.culture} (${sample.object_id})`}
                     </span>
                   </div>
                   <span 
@@ -143,8 +141,8 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                         isSelected ? "text-white" : ""
                     )}
                     style={{ 
-                        backgroundColor: isSelected ? currentHue : `${currentHue}15`, // Tinted bg
-                        color: isSelected ? 'white' : currentHue // Text matches hue
+                        backgroundColor: isSelected ? currentHue : `${currentHue}15`,
+                        color: isSelected ? 'white' : currentHue
                     }}
                   >
                     {sample.distance < 20 ? sample.distance?.toFixed(4) : 'N/A'}
@@ -156,7 +154,7 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
         </div>
       )}
 
-      <span className='text-muted-foreground text-[10px] italic '>Lower values indicated closer genetic proximity to the reference sample</span>
+      <span className='text-muted-foreground text-[10px] italic'>Lower values indicated closer genetic proximity to the reference sample</span>
     </Card>
   );
 }

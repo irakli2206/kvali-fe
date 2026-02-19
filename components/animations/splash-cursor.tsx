@@ -1,6 +1,8 @@
 //@ts-nocheck
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const INTERACTIVE_SELECTOR = 'button, a, [role="button"], input, select, textarea, [data-slot="button"], [data-slot="rainbow-button"]';
 
 function SplashCursor({
   SIM_RESOLUTION = 128,
@@ -20,6 +22,9 @@ function SplashCursor({
 }) {
   const canvasRef = useRef(null);
   const animationFrameId = useRef(null);
+  const [hideOverInteractive, setHideOverInteractive] = useState(false);
+  const setHideRef = useRef(setHideOverInteractive);
+  setHideRef.current = setHideOverInteractive;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -974,6 +979,10 @@ function SplashCursor({
 
     let firstMouseMoveHandled = false;
     function handleMouseMove(e) {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const overInteractive = el?.closest(INTERACTIVE_SELECTOR) ?? false;
+      setHideRef.current(!!overInteractive);
+
       let pointer = pointers[0];
       let posX = scaleByPixelRatio(e.clientX);
       let posY = scaleByPixelRatio(e.clientY);
@@ -1052,7 +1061,9 @@ function SplashCursor({
         zIndex: 50,
         pointerEvents: 'none',
         width: '100%',
-        height: '100%'
+        height: '100%',
+        opacity: hideOverInteractive ? 0 : 1,
+        transition: 'opacity 0.2s ease-out',
       }}
     >
       <canvas

@@ -48,35 +48,30 @@ export function useMapSync({
                     type: 'circle',
                     source: 'ancient-samples',
                     layout: {
-                        // This enables the sorting logic
                         'circle-sort-key': [
                             'case',
-                            ['==', ['get', 'id'], safeHoverId], 2, // Hovered dot gets priority
-                            1 // Everyone else stays at base level
+                            ['==', ['get', 'id'], safeHoverId], 2,
+                            1
                         ]
                     },
                     paint: {
                         'circle-stroke-width': 1,
                         'circle-stroke-color': '#fff',
-                        // Add transitions so color/opacity changes feel smooth
                         'circle-color-transition': { duration: 300 },
                         'circle-opacity-transition': { duration: 200 }
                     }
                 });
             }
 
-            //Calculate Base Colors based on Mode
             const baseColor = selectedCulture
-                ? ['case', ['==', ['get', 'Simplified_Culture'], selectedCulture], '#3b82f6', '#d1d5db']
+                ? ['case', ['==', ['get', 'culture'], selectedCulture], '#3b82f6', '#d1d5db']
                 : (mapMode === 'distance' && targetSample)
                     ? distanceColors
                     : (mapMode === 'ydna' ? YDNAColors : '#78716c');
 
-
-            //Apply Paint Properties
             map.setPaintProperty('ancient-points', 'circle-color', [
                 'case',
-                ['==', ['get', 'id'], safeHoverId], '#2563eb', // Highlight color
+                ['==', ['get', 'id'], safeHoverId], '#2563eb',
                 baseColor as any
             ]);
 
@@ -86,20 +81,20 @@ export function useMapSync({
                 isAnyHovered ? 0.3 : 1
             ]);
 
-
             const sortKeyLogic = [
                 'case',
-                ['==', ['get', 'id'], safeHoverId], 3, // Hovered always on top
+                ['==', ['get', 'id'], safeHoverId], 3,
                 ['all',
                     ['==', mapMode, 'distance'],
                     ['has', 'distance'],
-                    ['<', ['get', 'distance'], 1000] // Assuming 1000 is your "too far/grey" threshold
+                    ['<', ['get', 'distance'], 1000]
                 ], 2,
                 ['all',
                     ['==', mapMode, 'ydna'],
-                    ['!=', ['get', 'Y-Symbol'], 'Unknown'] // Lift YDNA samples if they aren't unknown
+                    ['has', 'y_haplo'],
+                    ['!=', ['get', 'y_haplo'], '']
                 ], 2,
-                1 // Default base level
+                1
             ];
 
             map.setLayoutProperty('ancient-points', 'circle-sort-key', sortKeyLogic as any);
@@ -117,14 +112,10 @@ export function useMapSync({
             }
         };
 
-        // 1. If it's ready now (First load/Data change), run it.
         if (map.isStyleLoaded()) {
             attemptSync();
         }
 
-        // 2. Listen for the 'idle' event. 
-        // 'idle' is the most stable event to use after a theme swap 
-        // because it guarantees the style is fully applied and the map is stable.
         map.on('idle', attemptSync);
 
         return () => {

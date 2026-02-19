@@ -28,20 +28,17 @@ export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
 
     const { selectedSample, setSelectedSample } = useMapStore((state) => state)
 
-
-    // 1. Guard against undefined samples during filtering
     const filteredSamples = React.useMemo(() => {
         if (!samples || !Array.isArray(samples)) return []
         if (!search) return samples
 
         const s = search.toLowerCase()
         return samples.filter(item =>
-            item['Object-ID']?.toLowerCase().includes(s) ||
-            item['Simplified_Culture']?.toLowerCase().includes(s)
+            item.object_id?.toLowerCase().includes(s) ||
+            item.culture?.toLowerCase().includes(s)
         )
     }, [search, samples])
 
-    // 2. Early return if samples haven't loaded yet
     if (!samples) {
         return <Button variant="outline" className="w-[300px]" disabled>Loading samples...</Button>
     }
@@ -54,7 +51,7 @@ export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
                     role="combobox"
                     className="w-[300px] justify-between font-normal "
                 >
-                    {selectedSample ? selectedSample["Object-ID"] : <span className="text-muted-foreground">Select genetic sample</span> }
+                    {selectedSample ? selectedSample.object_id : <span className="text-muted-foreground">Select genetic sample</span> }
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -66,7 +63,6 @@ export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
                         onValueChange={setSearch}
                     />
                     <CommandList className="max-h-none">
-                        {/* 3. Safety check on the length property */}
                         {(filteredSamples?.length ?? 0) === 0 && (
                             <CommandEmpty>No samples found.</CommandEmpty>
                         )}
@@ -76,8 +72,8 @@ export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
                                 data={filteredSamples}
                                 itemContent={(index, sample) => (
                                     <CommandItem
-                                        key={sample["id"]}
-                                        value={sample["id"]}
+                                        key={sample.id}
+                                        value={sample.id}
                                         onSelect={async (currentValue) => {
                                             const sampleData = await getSampleDetails(currentValue)
                                             setSelectedSample(sampleData.data)
@@ -85,9 +81,9 @@ export function LargeSampleSearch({ samples = [] }: { samples: MapSample[] }) {
                                         }}
                                         className="flex flex-col items-start py-3"
                                     >
-                                        <span className="font-medium text-sm">{sample["Object-ID"]}</span>
+                                        <span className="font-medium text-sm">{sample.object_id}</span>
                                         <span className="text-[10px] text-zinc-500 uppercase">
-                                            {sample["Simplified_Culture"]}
+                                            {sample.culture}
                                         </span>
                                     </CommandItem>
                                 )}

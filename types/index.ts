@@ -1,18 +1,18 @@
 import z from "zod";
 import { signinSchema, signupSchema } from "./schemas";
-import { Database, Tables } from "./database.types";
+import { Tables } from "./database.types";
 
 export type SignupValues = z.infer<typeof signupSchema>
 
 export type SigninValues = z.infer<typeof signinSchema>
 
-export type Sample = Tables<'adna'>
+export type Sample = Tables<'adna_v3'>
 
 /** Samples returned by getMapSamples – coords parsed to numbers */
-export type MapSample = Omit<Sample, 'Latitude' | 'Longitude' | 'Mean'> & {
-    Latitude: number
-    Longitude: number
-    Mean: number
+export type MapSample = Omit<Sample, 'latitude' | 'longitude' | 'mean_bp'> & {
+    latitude: number
+    longitude: number
+    mean_bp: number
 }
 
 export type MapMode = 'neutral' | 'ydna' | 'distance'

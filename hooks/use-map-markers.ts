@@ -22,26 +22,19 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
         const map = mapRef.current;
         if (!selectedSample || !map) return;
 
-        const lat = parseCoords(selectedSample["Latitude"]!);
-        const lng = parseCoords(selectedSample["Longitude"]!);
+        const lat = parseCoords(selectedSample.latitude!);
+        const lng = parseCoords(selectedSample.longitude!);
         if (isNaN(lat) || isNaN(lng)) return;
 
-        // 1. Handle Marker (The Ping)
         if (pingRef.current) pingRef.current.remove();
         const el = document.createElement('div');
         el.className = 'relative flex h-8 w-8 items-center justify-center';
         el.innerHTML = PING_HTML;
         pingRef.current = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
 
-        // 2. Handle Camera
-        map.flyTo({ center: [lng, lat - 0], zoom: map.getZoom() < 5 ? 5 : map.getZoom(), essential: true, });
+        map.flyTo({ center: [lng, lat], zoom: map.getZoom() < 5 ? 5 : map.getZoom(), essential: true });
 
-        // 3. Handle Popup
         if (popupRef.current) {
-            // This is where the error was. Mapbox requires the function reference.
-            // If we don't have it, we can just remove the popup, 
-            // but the 'close' event might still fire. 
-            // To be safe, we'll manually remove the popup and null out the ref first.
             const oldPopup = popupRef.current;
             popupRef.current = null;
             oldPopup.remove();
@@ -59,10 +52,6 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
 
         popup.on('close', () => {
             setPopupContainer(null);
-
-            // Mapbox popups have an .isOpen() method. 
-            // If the popup is closed manually by the user, we remove the ping.
-            // If we are just swapping samples, our code handles the marker removal separately.
             if (pingRef.current && popupRef.current && !popupRef.current.isOpen()) {
                 pingRef.current.remove();
                 pingRef.current = null;
@@ -88,16 +77,15 @@ export function useMapMarkers(mapRef: React.RefObject<mapboxgl.Map | null>, geoj
         const map = mapRef.current;
         if (!map || !selectedCulture || !geojsonData) return;
 
-        // Find the first sample that belongs to this culture
         const firstMatch = geojsonData.features.find(
-            (f: any) => f.properties?.Simplified_Culture === selectedCulture
+            (f: any) => f.properties?.culture === selectedCulture
         );
 
         if (firstMatch) {
             const [lng, lat] = firstMatch.geometry.coordinates;
             map.flyTo({
                 center: [lng, lat],
-                zoom: 4, // Zoom out a bit to see the "group"
+                zoom: 4,
                 essential: true
             });
         }

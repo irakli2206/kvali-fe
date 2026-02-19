@@ -2,64 +2,63 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { Sample } from '@/types'
-import { Tables } from '@/types/database.types'
 import Papa from 'papaparse';
 
+const TABLE = 'adna_v3'
 
-export type AdnaRow = Tables<'adna'>
+function bpToCE(bp: string | null | undefined): number {
+    if (!bp) return 0
+    const num = parseFloat(String(bp).replace(',', '.'))
+    if (isNaN(num)) return 0
+    return Math.round(1950 - num)
+}
 
 /**
  * THIN FETCH: Only get essential map data.
- * Standalone async function for Next.js compatibility.
  */
 export async function getMapSamples() {
     try {
         const supabase = await createClient()
         const { data, error } = await supabase
-            .from('adna')
+            .from(TABLE)
             .select(`
                 id, 
-                "Object-ID",
-                Latitude, 
-                Longitude,
-                Simplified_Culture,
-                "Y-Symbol",
-                Mean
+                object_id,
+                latitude, 
+                longitude,
+                culture,
+                y_haplo,
+                mean_bp
             `)
             .not('g25_string', 'is', null)
             .csv()
+
+        if (error) {
+            console.error("Map Fetch Error:", error.message, error)
+            return { data: null, error: error.message }
+        }
 
         //@ts-ignore
         const sizeBytes = new Blob([data]).size
         console.log('getMapSamples response:', (sizeBytes / 1024).toFixed(1), 'KB')
 
-        if (error) {
-            console.error("Map Fetch Error:", error.message)
-            return { data: null, error: error.message }
-        }
-
-        const parsed: Papa.ParseResult<Sample> = Papa.parse(data, {
+        const parsed: Papa.ParseResult<Record<string, string>> = Papa.parse(data, {
             header: true,
-            dynamicTyping: false, // Turn this OFF to keep everything as strings for cleaning
+            dynamicTyping: false,
             skipEmptyLines: true
         });
 
+        const parseCoord = (val: string) => {
+            if (!val) return 0;
+            return parseFloat(String(val).replace(',', '.')) || 0;
+        };
 
-        const cleanedData = parsed.data.map((item) => {
-            // Helper to handle comma vs dot and force to number
-            const parseCoord = (val: string) => {
-                if (!val) return 0;
-                const normalized = String(val).replace(',', '.');
-                return parseFloat(normalized) || 0;
-            };
-
-            return {
-                ...item,
-                Latitude: parseCoord(item.Latitude as string),
-                Longitude: parseCoord(item.Longitude as string),
-                Mean: parseCoord(item.Mean as string) // Fix Mean while you're at it
-            };
-        });
+        const cleanedData = parsed.data.map((item) => ({
+            ...item,
+            latitude: parseCoord(item.latitude),
+            longitude: parseCoord(item.longitude),
+            mean_bp: parseCoord(item.mean_bp),
+        }));
 
         return { data: cleanedData, error: null }
     } catch (err) {
@@ -75,20 +74,17 @@ export async function getSampleDetails(id: string) {
     try {
         const supabase = await createClient()
         const { data, error } = await supabase
-            .from('adna')
+            .from(TABLE)
             .select('*')
             .eq('id', id)
             .single()
-
-        const sizeBytes = new Blob([data]).size
-        console.log('getSampleDetails response:', (sizeBytes / 1024).toFixed(1), 'KB')
 
         if (error) {
             console.error("Detail Fetch Error:", error.message)
             return { data: null, error: error.message }
         }
 
-        return { data: data as AdnaRow, error: null }
+        return { data: data as Sample, error: null }
     } catch (err) {
         return { data: null, error: "Critical server error" }
     }
@@ -98,13 +94,10 @@ export async function calculateDistances(sample: Sample) {
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('calculate_distances', {
         //@ts-ignore
-        target_vector: sample.g25_vector
+        target_vector: sample.g25_string
     });
 
-    const sizeBytes = new Blob([data]).size
-    console.log('calculateDistances response:', (sizeBytes / 1024).toFixed(1), 'KB')
-
-    console.log('error', error)
+    if (error) console.error('calculateDistances error:', error)
     return data
 }
 
@@ -114,8 +107,6 @@ export async function calculateDistancesFromVector(vector: number[]) {
         //@ts-ignore
         target_vector: vector
     });
-    const sizeBytes = new Blob([data]).size
-    console.log('calculateDistancesFromVector response:', (sizeBytes / 1024).toFixed(1), 'KB')
 
     if (error) console.error('calculateDistancesFromVector error:', error)
     return data

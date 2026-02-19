@@ -20,6 +20,9 @@ import { useUploadPipeline } from '@/hooks/use-dna-upload'
 import { useMapStore } from '@/store/use-map-store'
 import { parseG25ToVector } from '@/lib/g25-utils'
 import { Dna } from 'lucide-react'
+import type { UploadStep } from '@/hooks/use-dna-upload'
+
+const STEP_ORDER: UploadStep[] = ['reading', 'uploading', 'processing', 'done']
 
 type UploadDNASheetProps = {
     trigger?: React.ReactNode
@@ -27,7 +30,7 @@ type UploadDNASheetProps = {
 
 export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const { loading, error, k36Results, g25String, upload, reset } = useUploadPipeline()
+    const { loading, step, stepLabel, stepProgress, error, k36Results, g25String, upload, reset } = useUploadPipeline()
     const setUserG25Vector = useMapStore((s) => s.setUserG25Vector)
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +43,7 @@ export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
         <Sheet>
             <SheetTrigger asChild>
                 {trigger ?? (
-                    <Button variant="default" >
+                    <Button variant="primary" >
                         <Dna className="size-4" />
                         Compare my DNA
                     </Button>
@@ -69,9 +72,24 @@ export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
                     </div>
 
                     {loading && (
-                        <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">Decoding markers...</p>
-                            <Progress value={undefined} className="h-2" />
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-muted-foreground">{stepLabel}</p>
+                                <span className="text-xs text-muted-foreground tabular-nums">{stepProgress}%</span>
+                            </div>
+                            <Progress value={stepProgress} className="h-2" />
+                            <div className="flex gap-1.5 pt-1">
+                                {(['reading', 'uploading', 'processing', 'done'] as const).map((s) => (
+                                    <div
+                                        key={s}
+                                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                                            STEP_ORDER.indexOf(step) >= STEP_ORDER.indexOf(s)
+                                                ? 'bg-primary'
+                                                : 'bg-muted'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     )}
 

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 const STORAGE_KEY = "kvali-user-dna";
 
@@ -8,11 +9,27 @@ type StoredDNA = {
     storedAt: number;
 };
 
-type UploadState = {
-    loading: boolean;
-    error: string | null;
+export type UploadStep = 'idle' | 'reading' | 'uploading' | 'processing' | 'done';
+
+const STEP_LABELS: Record<UploadStep, string> = {
+    idle: '',
+    reading: 'Reading file…',
+    uploading: 'Uploading to engine…',
+    processing: 'Computing G25 coordinates…',
+    done: 'Done!',
+};
+
+const STEP_PROGRESS: Record<UploadStep, number> = {
+    idle: 0,
+    reading: 10,
+    uploading: 30,
+    processing: 65,
+    done: 100,
+};
+
+type UploadResult = {
+    g25String: string;
     k36Results: Record<string, number> | null;
-    g25String: string | null;
 };
 
 function loadStoredDNA(): StoredDNA | null {
@@ -47,68 +64,84 @@ function clearStoredDNA() {
 }
 
 export function useUploadPipeline() {
-    const [state, setState] = useState<UploadState>({
-        loading: false,
-        error: null,
-        k36Results: null,
-        g25String: null,
-    });
+    const [step, setStep] = useState<UploadStep>('idle');
+    const [stored, setStored] = useState<UploadResult | null>(null);
 
     useEffect(() => {
-        const stored = loadStoredDNA();
-        if (stored) {
-            setState((prev) => ({
-                ...prev,
-                g25String: stored.g25String,
-                k36Results: stored.k36Results ?? null,
-            }));
+        const data = loadStoredDNA();
+        if (data) {
+            setStored({ g25String: data.g25String, k36Results: data.k36Results ?? null });
+            setStep('done');
         }
     }, []);
 
-    const upload = async (file: File) => {
-        setState({ loading: true, error: null, k36Results: null, g25String: null });
-        const formData = new FormData();
-        formData.append('file', file);
+    const mutation = useMutation<UploadResult, Error, File>({
+        onMutate: () => {
+            setStored(null);
+        },
+        mutationFn: async (file) => {
+            setStep('reading');
 
-        try {
-            const g25response = await fetch('http://127.0.0.1:8000/raw-to-g25', {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            setStep('uploading');
+
+            const response = await fetch('http://127.0.0.1:8000/raw-to-g25', {
                 method: 'POST',
                 body: formData,
             });
 
-            const g25data = await g25response.json();
+            setStep('processing');
 
-            if (g25data.status === "success") {
-                const g25String = g25data.vahaduo_format;
-                const k36Results = g25data.k36_results ?? null;
-                setState((prev) => ({ ...prev, g25String, k36Results }));
+            const data = await response.json();
 
-                saveStoredDNA({
-                    g25String,
-                    k36Results: k36Results ?? undefined,
-                    storedAt: Date.now(),
-                });
-            } else {
-                setState((prev) => ({ ...prev, error: g25data.error ?? "G25 conversion failed" }));
+            if (data.status !== "success") {
+                throw new Error(data.error ?? "G25 conversion failed");
             }
-        } catch (error) {
-            console.error("Kvali Engine connection error:", error);
-            setState((prev) => ({
-                ...prev,
-                loading: false,
-                error: error instanceof Error ? error.message : "Connection failed",
-            }));
-        } finally {
-            setState((prev) => ({ ...prev, loading: false }));
-        }
-    };
 
-    const reset = () => {
+            return {
+                g25String: data.vahaduo_format as string,
+                k36Results: (data.k36_results as Record<string, number>) ?? null,
+            };
+        },
+        onSuccess: (result) => {
+            setStep('done');
+            setStored(result);
+            saveStoredDNA({
+                g25String: result.g25String,
+                k36Results: result.k36Results ?? undefined,
+                storedAt: Date.now(),
+            });
+        },
+        onError: () => {
+            setStep('idle');
+        },
+    });
+
+    const upload = useCallback((file: File) => mutation.mutate(file), [mutation]);
+
+    const reset = useCallback(() => {
         clearStoredDNA();
-        setState({ loading: false, error: null, k36Results: null, g25String: null });
-    };
+        mutation.reset();
+        setStored(null);
+        setStep('idle');
+    }, [mutation]);
 
-    return { ...state, upload, reset };
+    const g25String = stored?.g25String ?? mutation.data?.g25String ?? null;
+    const k36Results = stored?.k36Results ?? mutation.data?.k36Results ?? null;
+
+    return {
+        loading: mutation.isPending,
+        step,
+        stepLabel: STEP_LABELS[step],
+        stepProgress: STEP_PROGRESS[step],
+        error: mutation.error?.message ?? null,
+        g25String,
+        k36Results,
+        upload,
+        reset,
+    };
 }
 
 export { loadStoredDNA, clearStoredDNA };

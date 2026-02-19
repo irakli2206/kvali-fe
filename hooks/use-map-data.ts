@@ -8,8 +8,8 @@ import { useMapSamples } from './use-map-samples'
 
 const USER_SAMPLE: Partial<Sample> = {
     id: 'user',
-    'Object-ID': 'You',
-    Simplified_Culture: 'Your DNA',
+    object_id: 'You',
+    culture: 'Your DNA',
 }
 
 export function useMapData() {
@@ -54,17 +54,19 @@ export function useMapData() {
             const props = feature.properties
             if (!props) return false
 
-            const year = parseFloat(props.Mean)
-            const isWithinTime = isNaN(year) || (year >= minYear && year <= maxYear)
+            const year = parseFloat(props.mean_bp)
+            const yearCE = isNaN(year) ? NaN : 1950 - year
+            const isWithinTime = isNaN(yearCE) || (yearCE >= minYear && yearCE <= maxYear)
             if (!isWithinTime) return false
 
             if (mapMode === 'ydna') {
-                const sampleY = props['Y-Symbol']
-                const isValidY = sampleY && !['null', 'unknown', 'N/A', '', 'None'].includes(sampleY)
+                const yHaplo = props.y_haplo
+                const isValidY = yHaplo && !['null', 'unknown', 'N/A', '', 'None', 'n/a', '..'].includes(yHaplo)
                 if (!isValidY) return false
 
                 if (selectedYDNA?.length > 0) {
-                    return selectedYDNA.some((group) => sampleY?.startsWith(group))
+                    const group = yHaplo.slice(0, 2)
+                    return selectedYDNA.includes(group)
                 }
             }
 
@@ -86,7 +88,7 @@ export function useMapData() {
             if (!topMatches) return
 
             setSelectedCulture(null)
-            setTargetSample({ ...USER_SAMPLE, g25_vector: vector } as Sample)
+            setTargetSample({ ...USER_SAMPLE, g25_string: vector.join(',') } as Sample)
 
             const distanceMap = new Map(topMatches.map((item) => [item.id, item.distance]))
             const mergedData = initialData.map((originalSample: any) => {
