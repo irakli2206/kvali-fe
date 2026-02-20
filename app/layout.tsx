@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Google_Sans_Flex } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Google_Sans_Flex, Figtree } from "next/font/google";
 import "./globals.css";
 import Header, { NavigationSection } from "@/components/shared/header";
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/shared/theme-provider";
+import { LandingThemeLock } from "@/components/shared/landing-theme-lock";
 
 
 const googleSansFlex = Google_Sans_Flex({
   variable: "--font-google-sans-flex",
+  subsets: ["latin"],
+  display: 'swap',
+  fallback: ['system-ui']
+});
+
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
   display: 'swap',
   fallback: ['system-ui']
@@ -59,9 +67,9 @@ export default function RootLayout({
 
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={` ${googleSansFlex.variable} antialiased `}
+        className={` ${figtree.className} antialiased `}
       >
         <ThemeProvider
           attribute="class"
@@ -69,6 +77,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <LandingThemeLock />
           <main>{children}</main>
           <Toaster />
         </ThemeProvider>

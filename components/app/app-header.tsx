@@ -42,6 +42,7 @@ import { signout } from '@/app/(auth)/actions'
 import KvaliLogo from '@/assets/logo'
 import UploadDNASheet from '../views/map/upload-dna-sheet'
 import { useMapSamples } from '@/hooks/use-map-samples'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function AppHeader() {
     const { data: samples = [] } = useMapSamples()
@@ -63,7 +64,8 @@ export default function AppHeader() {
                 <CultureSearch samples={samples} />
             </section>
 
-            <section className='flex gap-2'>
+            <section className='flex gap-2 items-center'>
+                <ThemeToggle />
                 <UploadDNASheet />
                 {/* <Button variant='secondary' onClick={() => { signout() }}>Sign Out</Button> */}
             </section>

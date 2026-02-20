@@ -4,6 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 
 const INTERACTIVE_SELECTOR = 'button, a, [role="button"], input, select, textarea, [data-slot="button"], [data-slot="rainbow-button"]';
 
+/** Resolve CSS var(--primary) to RGB in 0–1 range. Uses a temporary element so oklch is computed to rgb. */
+function getPrimaryRgb(): { r: number; g: number; b: number } {
+  if (typeof document === 'undefined') return { r: 0.24, g: 0.4, b: 0.9 };
+  const el = document.createElement('div');
+  el.style.cssText = 'position:absolute;left:-9999px;background:var(--primary)';
+  document.body.appendChild(el);
+  const bg = getComputedStyle(el).backgroundColor;
+  document.body.removeChild(el);
+  const m = bg.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (m) return { r: +m[1] / 255, g: +m[2] / 255, b: +m[3] / 255 };
+  return { r: 0.24, g: 0.4, b: 0.9 };
+}
+
 function SplashCursor({
   SIM_RESOLUTION = 128,
   DYE_RESOLUTION = 1440,
@@ -29,6 +42,16 @@ function SplashCursor({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    const primaryRgb = getPrimaryRgb();
+    // Softer blue: blend primary with white so the hue stays but reads pastel
+    const blendWithWhite = (c: number, amount: number) => c * (1 - amount) + amount;
+    const softPrimary = {
+      r: blendWithWhite(primaryRgb.r, 0.35),
+      g: blendWithWhite(primaryRgb.g, 0.35),
+      b: blendWithWhite(primaryRgb.b, 0.35),
+    };
+    const splashColor = { r: softPrimary.r * 0.15, g: softPrimary.g * 0.15, b: softPrimary.b * 0.15 };
 
     // Track if the effect is still active for cleanup
     let isActive = true;
@@ -887,11 +910,7 @@ function SplashCursor({
     }
 
     function generateColor() {
-      let c = HSVtoRGB(Math.random(), 1.0, 1.0);
-      c.r *= 0.15;
-      c.g *= 0.15;
-      c.b *= 0.15;
-      return c;
+      return { r: splashColor.r, g: splashColor.g, b: splashColor.b };
     }
 
     function HSVtoRGB(h, s, v) {

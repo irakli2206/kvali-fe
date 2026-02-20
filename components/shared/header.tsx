@@ -20,10 +20,9 @@ import Logo from "@/assets/logo";
 import Logo2 from "@/assets/kvali logo.png";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link"
-import CTAButton from "../ui/cta-button";
 import KvaliLogo from "@/assets/logo";
 
 export type NavigationSection = {
@@ -83,7 +82,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                 <div>
                     <a href="#">
                         {/* <Logo className="gap-3" /> */}
-                        <KvaliLogo  className="h-10 w-auto"/>
+                        <KvaliLogo className="h-9 w-auto" />
                     </a>
 
                 </div>
@@ -107,7 +106,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                 </div> */}
 
                 {/* Desktop CTA */}
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
                     {/* <CTAButton className="hidden lg:flex" /> */}
 
                     <div className="lg:hidden">
@@ -161,7 +160,21 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                                         </NavigationMenu>
 
                                         <div className="w-fit">
-                                            <CTAButton />
+                                            <Button
+                                                asChild
+                                                size="cta"
+                                                variant='cta'
+                                                className={cn(
+                                                    "group rounded-full ",
+
+                                                )}
+                                            >
+                                                <Link href="/app" className=" inline-flex items-center gap-1 overflow-hidden">
+                                                    <div className="z-0  border-3  group-hover:-inset-1  absolute duration-200 inset-0 rounded-full  border-blue-300/60"></div>
+                                                    Start Exploring
+                                                    <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-all duration-200" />
+                                                </Link>
+                                            </Button>
                                         </div>
                                     </div>
 

@@ -40,7 +40,7 @@ export default function AuthLayout({
 
     return (
         <>
-            <main className="w-full flex flex-col min-h-screen h-screen">
+            <main className="w-full flex  flex-col min-h-screen h-screen bg-neutral-50">
                 <Header navigationData={navigationData} />
                 {children}
             </main>

@@ -10,7 +10,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+        cta: "bg-primary text-primary-foreground hover:bg-primary/90 relative  ring-0 ring-primary/50 duration-200",
+        light: "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary ring-0 ring-primary/50 duration-200",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
@@ -23,6 +24,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        cta: "h-10 px-6 py-4 has-[>svg]:px-6 text-base",
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",

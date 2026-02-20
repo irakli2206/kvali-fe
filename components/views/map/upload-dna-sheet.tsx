@@ -73,7 +73,7 @@ export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
                 {trigger ?? (
-                    <Button variant="primary">
+                    <Button >
                         <Dna className="size-4" />
                         Compare my DNA
                     </Button>
