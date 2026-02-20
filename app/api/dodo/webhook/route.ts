@@ -1,29 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyDodoWebhookSignature, DODO_WEBHOOK_EVENTS } from "@/lib/dodo";
+import DodoPayments from "dodopayments";
+import { DODO_WEBHOOK_EVENTS } from "@/lib/dodo";
 
 const TABLE = "dna_entitlements";
 
+/** Webhook key: use DODO_PAYMENTS_WEBHOOK_KEY (Dodo docs) or DODO_WEBHOOK_SECRET */
+function getWebhookKey(): string | null {
+  return (
+    process.env.DODO_PAYMENTS_WEBHOOK_KEY?.trim() ||
+    process.env.DODO_WEBHOOK_SECRET?.trim() ||
+    null
+  );
+}
+
 /**
  * Dodo webhook handler.
- * Verifies webhook signature, then on payment.succeeded inserts into dna_entitlements (user_id from metadata).
- * Requires: DODO_WEBHOOK_SECRET, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * Verifies webhook signature via official SDK, then on payment.succeeded inserts into dna_entitlements.
+ * Requires: DODO_PAYMENTS_WEBHOOK_KEY (or DODO_WEBHOOK_SECRET), NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
-  const signatureHeader = request.headers.get("webhook-signature") ?? null;
-  const timestampHeader = request.headers.get("webhook-timestamp") ?? null;
-
-  if (!verifyDodoWebhookSignature(rawBody, signatureHeader, timestampHeader)) {
-    console.warn("Dodo webhook: signature verification failed (check DODO_WEBHOOK_SECRET and headers)");
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  const webhookKey = getWebhookKey();
+  if (!webhookKey) {
+    console.warn("Dodo webhook: missing DODO_PAYMENTS_WEBHOOK_KEY or DODO_WEBHOOK_SECRET");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
+
+  const headers = {
+    "webhook-id": request.headers.get("webhook-id") ?? "",
+    "webhook-signature": request.headers.get("webhook-signature") ?? "",
+    "webhook-timestamp": request.headers.get("webhook-timestamp") ?? "",
+  };
 
   let payload: Record<string, unknown>;
   try {
-    payload = JSON.parse(rawBody) as Record<string, unknown>;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    const client = new DodoPayments({ webhookKey });
+    payload = client.webhooks.unwrap(rawBody, { headers, key: webhookKey }) as unknown as Record<string, unknown>;
+  } catch (err) {
+    console.warn("Dodo webhook: signature verification failed", err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
   const eventType = (payload.type ?? payload.event_type ?? payload.eventType) as string | undefined;
