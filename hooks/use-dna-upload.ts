@@ -4,6 +4,18 @@ import { KVALI_ENGINE_URL } from "@/lib/constants";
 
 const STORAGE_KEY = "kvali-user-dna";
 
+/** DNA file vendor / source. Backend expects these exact values. */
+export const DNA_VENDORS = [
+    "23andme",
+    "ancestry",
+    "ftdna",
+    "ftdna2",
+    "wegene",
+    "myheritage",
+] as const;
+
+export type DNAVendor = (typeof DNA_VENDORS)[number];
+
 type StoredDNA = {
     g25String: string;
     k36Results?: Record<string, number>;
@@ -76,22 +88,51 @@ export function useUploadPipeline() {
         }
     }, []);
 
-    const mutation = useMutation<UploadResult, Error, File>({
+    const mutation = useMutation<UploadResult, Error, { file: File; vendor: DNAVendor }>({
         onMutate: () => {
             setStored(null);
         },
-        mutationFn: async (file) => {
+        mutationFn: async ({ file, vendor }) => {
             setStep('reading');
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('vendor', vendor);
 
             setStep('uploading');
 
-            const response = await fetch(`${KVALI_ENGINE_URL}/raw-to-g25`, {
-                method: 'POST',
-                body: formData,
-            });
+            // Render free tier cold start can take 50–90s; use long timeout and retry once on 504/timeout
+            const REQUEST_TIMEOUT_MS = 120_000;
+            const tryFetch = async (): Promise<Response> => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+                try {
+                    return await fetch(`${KVALI_ENGINE_URL}/raw-to-g25`, {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal,
+                    });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            };
+
+            let response: Response;
+            try {
+                response = await tryFetch();
+                if (response.status === 504) {
+                    await new Promise((r) => setTimeout(r, 2000));
+                    response = await tryFetch();
+                }
+            } catch (e) {
+                const isTimeout = (e as Error)?.name === 'AbortError';
+                if (isTimeout) {
+                    await new Promise((r) => setTimeout(r, 2000));
+                    response = await tryFetch();
+                } else {
+                    throw e;
+                }
+            }
 
             setStep('processing');
 
@@ -120,7 +161,10 @@ export function useUploadPipeline() {
         },
     });
 
-    const upload = useCallback((file: File) => mutation.mutate(file), [mutation]);
+    const upload = useCallback(
+        (file: File, vendor: DNAVendor) => mutation.mutate({ file, vendor }),
+        [mutation]
+    );
 
     const reset = useCallback(() => {
         clearStoredDNA();

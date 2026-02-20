@@ -14,16 +14,20 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Progress } from '@/components/ui/progress'
 import { Label } from '@/components/ui/label'
-import { useUploadPipeline } from '@/hooks/use-dna-upload'
+import { useUploadPipeline, DNA_VENDORS, type DNAVendor } from '@/hooks/use-dna-upload'
 import { useMapStore } from '@/store/use-map-store'
 import { useDnaEntitlement } from '@/hooks/use-dna-entitlement'
 import { parseG25ToVector } from '@/lib/g25-utils'
 import { Dna, Loader2, Sparkles } from 'lucide-react'
-import type { UploadStep } from '@/hooks/use-dna-upload'
-
-const STEP_ORDER: UploadStep[] = ['reading', 'uploading', 'processing', 'done']
+const VENDOR_LABELS: Record<DNAVendor, string> = {
+    '23andme': '23andMe',
+    ancestry: 'Ancestry',
+    ftdna: 'FTDNA',
+    ftdna2: 'FTDNA 2',
+    wegene: 'WeGene',
+    myheritage: 'MyHeritage',
+}
 
 type UploadDNASheetProps = {
     trigger?: React.ReactNode
@@ -32,8 +36,9 @@ type UploadDNASheetProps = {
 export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [open, setOpen] = React.useState(false)
+    const [vendor, setVendor] = React.useState<DNAVendor>('23andme')
     const { entitled, signedIn, isLoading: entitlementLoading, refetch: refetchEntitlement } = useDnaEntitlement({ enabled: open })
-    const { loading, step, stepLabel, stepProgress, error, g25String, upload, reset } = useUploadPipeline()
+    const { loading, error, g25String, upload, reset } = useUploadPipeline()
     const setUserG25Vector = useMapStore((s) => s.setUserG25Vector)
     const [purchaseLoading, setPurchaseLoading] = React.useState(false)
 
@@ -43,7 +48,7 @@ export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (file) upload(file)
+        if (file) upload(file, vendor)
         e.target.value = ''
     }
 
@@ -133,6 +138,22 @@ export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
                     {showUpload && (
                         <>
                             <div className="space-y-2">
+                                <Label htmlFor="dna-vendor">DNA provider</Label>
+                                <select
+                                    id="dna-vendor"
+                                    value={vendor}
+                                    onChange={(e) => setVendor(e.target.value as DNAVendor)}
+                                    disabled={loading}
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {DNA_VENDORS.map((v) => (
+                                        <option key={v} value={v}>
+                                            {VENDOR_LABELS[v]}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
                                 <Label htmlFor="dna-file">Raw DNA file</Label>
                                 <Input
                                     ref={fileInputRef}
@@ -146,24 +167,9 @@ export default function UploadDNASheet({ trigger }: UploadDNASheetProps) {
                             </div>
 
                             {loading && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-sm text-muted-foreground">{stepLabel}</p>
-                                        <span className="text-xs text-muted-foreground tabular-nums">{stepProgress}%</span>
-                                    </div>
-                                    <Progress value={stepProgress} className="h-2" />
-                                    <div className="flex gap-1.5 pt-1">
-                                        {(['reading', 'uploading', 'processing', 'done'] as const).map((s) => (
-                                            <div
-                                                key={s}
-                                                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                                                    STEP_ORDER.indexOf(step) >= STEP_ORDER.indexOf(s)
-                                                        ? 'bg-primary'
-                                                        : 'bg-muted'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
+                                <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+                                    <Loader2 className="size-5 animate-spin" />
+                                    <span className="text-sm">Processing…</span>
                                 </div>
                             )}
 

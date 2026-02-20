@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Google_Sans_Flex, Figtree } from "next/font/google";
+import { Google_Sans_Flex, Figtree } from "next/font/google";
 import "./globals.css";
-import Header, { NavigationSection } from "@/components/shared/header";
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { LandingThemeLock } from "@/components/shared/landing-theme-lock";
@@ -37,40 +36,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const navigationData: NavigationSection[] = [
-    {
-      title: "About us",
-      href: "#",
-    },
-    {
-      title: "Services",
-      href: "#",
-    },
-    {
-      title: "Work",
-      href: "#",
-    },
-    {
-      title: "Team",
-      href: "#",
-    },
-    {
-      title: "Pricing",
-      href: "#",
-    },
-    {
-      title: "Awards",
-      href: "#",
-    },
-  ];
-
-
-
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={` ${figtree.className} antialiased `}
-      >
+      <body className={`${figtree.className}  antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -160,3 +160,16 @@
 .animate-rainbow {
   animation: rainbow 4s linear infinite;
 }
+
+@keyframes grainient-drift {
+  0% {
+    background-position: 0% 100%, 100% 80%, 50% 0%, 80% 50%, 50% 50%;
+  }
+  100% {
+    background-position: 15% 85%, 85% 95%, 65% 15%, 55% 60%, 45% 55%;
+  }
+}
+
+.grainient-drift {
+  animation: grainient-drift 20s ease-in-out infinite alternate;
+}

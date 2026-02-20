@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import GrainientCSS from "@/components/shared/grainient-css";
 
 const springTransition = {
   type: "spring" as const,
@@ -23,6 +24,7 @@ function Hero() {
     <section>
       <div className="w-full h-full">
         <div className="absolute inset-0 z-0 pointer-events-none">
+          <GrainientCSS className=" opacity-80" animate grain />
           <SplashCursor
             SIM_RESOLUTION={128}
             DYE_RESOLUTION={1440}
@@ -74,7 +76,7 @@ function Hero() {
                   )}
                 >
                   <Link href="/app" className=" inline-flex items-center gap-1 overflow-hidden">
-                    <div className="z-0  border-3  group-hover:-inset-1  absolute duration-200 inset-0 rounded-full  border-blue-300/60"></div>
+                    <div className="z-0  border-3 cursor-default  group-hover:-inset-1  absolute duration-200 inset-0 rounded-full  border-blue-300/60"></div>
                     Start Exploring
                     <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-all duration-200" />
                   </Link>

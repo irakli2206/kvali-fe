@@ -39,10 +39,10 @@ import Link from 'next/link'
 import { DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenu } from '../ui/dropdown-menu'
 import { CultureSearch } from './map/culture-search'
 import { signout } from '@/app/(auth)/actions'
-import KvaliLogo from '@/assets/logo'
 import UploadDNASheet from '../views/map/upload-dna-sheet'
 import { useMapSamples } from '@/hooks/use-map-samples'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { LogoIcon } from '../shared/logo-icon'
 
 export default function AppHeader() {
     const { data: samples = [] } = useMapSamples()
@@ -55,7 +55,7 @@ export default function AppHeader() {
         <div className='w-full flex justify-between items-center gap-4'>
             <section>
                 <Link href="/">
-                    <KvaliLogo className="h-8 w-auto" />
+                    <LogoIcon size={32} />
                 </Link>
             </section>
 

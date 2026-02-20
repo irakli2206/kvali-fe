@@ -16,14 +16,11 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
-import Logo from "@/assets/logo";
-import Logo2 from "@/assets/kvali logo.png";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link"
-import KvaliLogo from "@/assets/logo";
+import { LogoIcon } from "./logo-icon";
 
 export type NavigationSection = {
     title: string;
@@ -82,7 +79,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                 <div>
                     <a href="#">
                         {/* <Logo className="gap-3" /> */}
-                        <KvaliLogo className="h-9 w-auto" />
+                        <LogoIcon size={32} className="h-9 w-auto" />
                     </a>
 
                 </div>
@@ -129,7 +126,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
                             >
                                 <div className="flex items-center justify-between p-6">
                                     <a href="#">
-                                        <KvaliLogo className="gap-2" />
+                                        <LogoIcon size={32} className="gap-2" />
                                     </a>
                                     <SheetClose>
                                         <div className="rounded-full border border-border p-2.5">
