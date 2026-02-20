@@ -24,8 +24,8 @@ function Hero({ v2 }: { v2?: boolean }) {
     <section>
       <div className="w-full h-full">
         <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-200" : "bg-transparent")}>
-          {!v2 && <DitherWaves enableMouseInteraction={false} dither={false}  className="opacity-50" />}
-          <SplashCursor
+          {!v2 && <DitherWaves enableMouseInteraction={false} dither={false} className="opacity-50" />}
+          {v2 && <SplashCursor
             SIM_RESOLUTION={128}
             DYE_RESOLUTION={1440}
             DENSITY_DISSIPATION={3.5}
@@ -35,7 +35,7 @@ function Hero({ v2 }: { v2?: boolean }) {
             SPLAT_RADIUS={0.2}
             SPLAT_FORCE={6000}
             COLOR_UPDATE_SPEED={10}
-          />
+          />}
         </div>
         <div className="relative w-full pt-0 md:pt-0 pb-6 md:pb-10">
           <div className="container mx-auto relative z-10 ">
