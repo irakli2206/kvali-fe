@@ -1,6 +1,6 @@
 /**
  * Dodo Payments API helpers: create checkout session, verify webhook signature.
- * Env: DODO_API_KEY, DODO_PRODUCT_ID, DODO_WEBHOOK_SECRET; optional: DODO_USE_TEST, DODO_CHECKOUT_REDIRECT_URL
+ * Env: DODO_API_KEY or DODO_PAYMENTS_API_KEY, DODO_PRODUCT_ID; optional: DODO_USE_TEST, DODO_CHECKOUT_REDIRECT_URL
  *
  * Use test.dodopayments.com when DODO_USE_TEST is set (or when API key looks like test);
  * otherwise live.dodopayments.com.
@@ -9,9 +9,10 @@
 import crypto from "node:crypto";
 
 function getDodoBaseUrl(): string {
+  const key = process.env.DODO_PAYMENTS_API_KEY ?? process.env.DODO_API_KEY ?? "";
   const useTest =
     process.env.DODO_USE_TEST === "true" ||
-    (process.env.DODO_USE_TEST !== "false" && (process.env.DODO_API_KEY ?? "").toLowerCase().includes("test"));
+    (process.env.DODO_USE_TEST !== "false" && key.toLowerCase().includes("test"));
   return useTest ? "https://test.dodopayments.com" : "https://live.dodopayments.com";
 }
 
@@ -32,9 +33,9 @@ export type CreateCheckoutResponse = {
 export async function createCheckoutSession(
   params: CreateCheckoutParams
 ): Promise<CreateCheckoutResponse | { error: string }> {
-  const apiKey = process.env.DODO_API_KEY;
+  const apiKey = process.env.DODO_PAYMENTS_API_KEY?.trim() || process.env.DODO_API_KEY?.trim();
   if (!apiKey) {
-    return { error: "Dodo is not configured (missing DODO_API_KEY)." };
+    return { error: "Dodo is not configured (missing DODO_PAYMENTS_API_KEY or DODO_API_KEY)." };
   }
 
   const { productId, returnUrl, metadata } = params;

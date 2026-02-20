@@ -5,6 +5,11 @@ import { DODO_WEBHOOK_EVENTS } from "@/lib/dodo";
 
 const TABLE = "dna_entitlements";
 
+/** API key: DodoPayments SDK requires it even for webhook verify. Use DODO_PAYMENTS_API_KEY or DODO_API_KEY */
+function getApiKey(): string | null {
+  return process.env.DODO_PAYMENTS_API_KEY?.trim() || process.env.DODO_API_KEY?.trim() || null;
+}
+
 /** Webhook key: use DODO_PAYMENTS_WEBHOOK_KEY (Dodo docs) or DODO_WEBHOOK_SECRET */
 function getWebhookKey(): string | null {
   return (
@@ -33,9 +38,15 @@ export async function POST(request: NextRequest) {
     "webhook-timestamp": request.headers.get("webhook-timestamp") ?? "",
   };
 
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.warn("Dodo webhook: missing DODO_PAYMENTS_API_KEY or DODO_API_KEY (required by SDK for verify)");
+    return NextResponse.json({ error: "Server config error" }, { status: 500 });
+  }
+
   let payload: Record<string, unknown>;
   try {
-    const client = new DodoPayments({ webhookKey });
+    const client = new DodoPayments({ bearerToken: apiKey, webhookKey });
     payload = client.webhooks.unwrap(rawBody, { headers, key: webhookKey }) as unknown as Record<string, unknown>;
   } catch (err) {
     console.warn("Dodo webhook: signature verification failed", err instanceof Error ? err.message : err);
