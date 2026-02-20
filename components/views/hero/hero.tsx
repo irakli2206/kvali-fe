@@ -89,7 +89,7 @@ function Hero({ avatarList }: HeroSectionProps) {
                                         damping: 20,
                                         delay: 0.1
                                     }}
-                                    className="text-xs font-normal max-w-2xl text-muted-foreground"
+                                    className="text-base font-normal max-w-2xl text-muted-foreground"
                                 >
                                     The world's ancient genomes, centralized. Map migrations, calculate genetic distances, and explore human history with precision.
                                 </motion.p>

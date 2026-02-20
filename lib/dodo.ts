@@ -97,7 +97,11 @@ export function verifyDodoWebhookSignature(
   const parts = signatureHeader.split(",").map((p) => p.trim());
   const sigPart = parts.find((p) => p.startsWith("v1,"));
   if (!sigPart) return false;
-  const signature = sigPart.slice(3); // "v1," -> value
+  let signature = sigPart.slice(3); // "v1," -> value
+  // Dodo may send base64url (- and _); normalize to base64 for decoding
+  if (signature.includes("-") || signature.includes("_")) {
+    signature = signature.replace(/-/g, "+").replace(/_/g, "/");
+  }
 
   const signedPayload = `${timestampHeader}.${rawBody}`;
   const hmac = crypto.createHmac("sha256", secret);
