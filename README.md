@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment
+
+For **Dodo Payments** (one-time “Put me on the map” / DNA upload):
+
+- `DODO_API_KEY` – Dodo API key (Developer → API Keys; keep secret). Use full access for creating checkouts.
+- `DODO_PRODUCT_ID` – Product ID of your one-time “DNA → G25” product (create in Dodo dashboard).
+- `DODO_WEBHOOK_SECRET` – Webhook signing secret (Developer → Webhooks → create endpoint → copy secret).
+- `SUPABASE_SERVICE_ROLE_KEY` – Used by the webhook to insert into `dna_entitlements` (keep secret).
+- `DODO_USE_TEST` – Set to `true` for test mode (test.dodopayments.com), or omit/`false` for live.
+- `DODO_CHECKOUT_REDIRECT_URL` – (Optional) Base URL for success redirect. Defaults to request origin. Use e.g. your ngrok URL in dev if needed.
+
+Create a product in the Dodo dashboard, then set `DODO_PRODUCT_ID`. Add a webhook for `payment.succeeded` → `https://your-domain.com/api/dodo/webhook` and copy the secret into `DODO_WEBHOOK_SECRET`.
+
+**Create `dna_entitlements` table:** Supabase Dashboard → SQL Editor → run `supabase/migrations/RUN_ME_dna_entitlements.sql` (or `supabase db push`).
+
 ## Getting Started
 
 First, run the development server:
