@@ -27,3 +27,10 @@ export const APP_URL =
  * Used for cross-subdomain support if you switch later.
  */
 export const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || '.kvali.com';
+
+/**
+ * Kvali Engine (DNA → G25 conversion backend).
+ * Default: Render deployment. For local dev set NEXT_PUBLIC_KVALI_ENGINE_URL=http://127.0.0.1:8000
+ */
+export const KVALI_ENGINE_URL =
+    process.env.NEXT_PUBLIC_KVALI_ENGINE_URL?.replace(/\/$/, '') || 'https://kvali.onrender.com';

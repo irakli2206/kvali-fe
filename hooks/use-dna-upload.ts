@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { KVALI_ENGINE_URL } from "@/lib/constants";
 
 const STORAGE_KEY = "kvali-user-dna";
 
@@ -87,7 +88,7 @@ export function useUploadPipeline() {
 
             setStep('uploading');
 
-            const response = await fetch('http://127.0.0.1:8000/raw-to-g25', {
+            const response = await fetch(`${KVALI_ENGINE_URL}/raw-to-g25`, {
                 method: 'POST',
                 body: formData,
             });
