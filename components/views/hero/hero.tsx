@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import GrainientCSS from "@/components/shared/grainient-css";
+import DitherWaves from "@/components/shared/dither-waves";
 
 const springTransition = {
   type: "spring" as const,
@@ -19,12 +19,12 @@ const springTransition = {
 const MotionButton = motion.create(Button)
 
 
-function Hero() {
+function Hero({ v2 }: { v2?: boolean }) {
   return (
     <section>
       <div className="w-full h-full">
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <GrainientCSS className=" opacity-80" animate grain />
+        <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-200" : "bg-transparent")}>
+          {!v2 && <DitherWaves enableMouseInteraction={false} dither={false}  className="opacity-50" />}
           <SplashCursor
             SIM_RESOLUTION={128}
             DYE_RESOLUTION={1440}
@@ -100,7 +100,7 @@ function Hero() {
                   </div>
                 </div> */}
               </motion.div>
-              {/* <footer className="mt-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
+              <footer className="mt-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
                 <p className="text-sm font-normal sm:px-2 px-10 text-center">
                   Compatible with major DNA providers
                 </p>
@@ -109,7 +109,7 @@ function Hero() {
                   <LogoMyHeritage className="h-8 w-auto" />
                   <LogoAncestry className="h-6 w-auto" />
                 </div>
-              </footer> */}
+              </footer>
             </div>
           </div>
         </div>

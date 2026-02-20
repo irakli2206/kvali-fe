@@ -7,7 +7,7 @@ export default function Home() {
 
   return (
     <>
-      <Hero />
+      <Hero v2={true} />
     </>
   );
 }

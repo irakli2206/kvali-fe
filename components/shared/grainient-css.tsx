@@ -7,10 +7,12 @@ interface GrainientCSSProps {
   animate?: boolean;
   /** Optional: SVG noise overlay. Set to true for default strength, or 0–1 for custom opacity */
   grain?: boolean | number;
-  /** Blob colors (ignored if you only use className for overlay) */
+  /** Blob colors – more colors = more variation. Defaults use a range of blue tints/hues. */
   color1?: string;
   color2?: string;
   color3?: string;
+  color4?: string;
+  color5?: string;
   className?: string;
 }
 
@@ -22,28 +24,33 @@ interface GrainientCSSProps {
 export default function GrainientCSS({
   animate = false,
   grain = false,
-  color1 = "rgb(230 242 255)",
-  color2 = "rgb(200 225 255)",
-  color3 = "rgb(235 245 255)",
+  color1 = "rgb(210 230 255)",
+  color2 = "rgb(235 238 252)",
+  color3 = "rgb(188 218 255)",
+  color4 = "rgb(225 235 250)",
+  color5 = "rgb(245 248 255)",
   className = "",
 }: GrainientCSSProps) {
-  const grainOpacity = grain === true ? 0.60 : typeof grain === "number" ? grain : 0;
+  const grainOpacity = grain === true ? 0.5 : typeof grain === "number" ? grain : 0;
   const showGrain = grain !== false && grainOpacity > 0;
+  const c4 = color4 ?? color2;
+  const c5 = color5 ?? color3;
   return (
     <div
       className={`absolute inset-0 h-full w-full overflow-hidden ${animate ? "grainient-drift" : ""} ${className}`.trim()}
       aria-hidden
       style={{
         background: `
-          radial-gradient(ellipse 150% 120% at 10% 90%, ${color1} 0%, transparent 55%),
-          radial-gradient(ellipse 140% 100% at 90% 80%, ${color2} 0%, transparent 55%),
-          radial-gradient(ellipse 130% 110% at 50% 20%, ${color3} 0%, transparent 50%),
-          radial-gradient(ellipse 120% 120% at 70% 50%, ${color2} 0%, transparent 60%),
-          radial-gradient(ellipse 180% 180% at 50% 50%, ${color3} 0%, transparent 75%)
+          radial-gradient(ellipse 120% 100% at 5% 95%, ${color1} 0%, transparent 45%),
+          radial-gradient(ellipse 100% 140% at 95% 10%, ${color2} 0%, transparent 50%),
+          radial-gradient(ellipse 140% 90% at 50% 5%, ${color3} 0%, transparent 48%),
+          radial-gradient(ellipse 80% 120% at 85% 70%, ${c4} 0%, transparent 55%),
+          radial-gradient(ellipse 130% 130% at 15% 40%, ${color1} 0%, transparent 52%),
+          radial-gradient(ellipse 160% 150% at 50% 55%, ${c5} 0%, transparent 70%)
         `,
         ...(animate && {
-          backgroundSize: "140% 140%, 140% 140%, 140% 140%, 140% 140%, 140% 140%",
-          backgroundPosition: "0% 100%, 100% 80%, 50% 0%, 80% 50%, 50% 50%",
+          backgroundSize: "140% 140%, 140% 140%, 140% 140%, 140% 140%, 140% 140%, 140% 140%",
+          backgroundPosition: "5% 95%, 95% 10%, 50% 5%, 85% 70%, 15% 40%, 50% 55%",
         }),
       }}
     >
@@ -55,7 +62,7 @@ export default function GrainientCSS({
           aria-hidden
         >
           <filter id="grainient-css-grain">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.56" numOctaves="5" result="noise" />
             <feColorMatrix in="noise" type="saturate" values="0" result="mono" />
             <feBlend in="SourceGraphic" in2="mono" mode="overlay" />
           </filter>
