@@ -30,7 +30,8 @@ export default function MapPopup({ sample, handleCalculateDists, onClose }: { sa
     const { data, isLoading } = useQuery({
         queryKey: ['sample', sample.id],
         queryFn: () => getSampleDetails(sample.id).then(res => res.data),
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 10, // 10 min
+        gcTime: 1000 * 60 * 30, // 30 min – reuse if reopening same sample
     })
 
     if (isLoading) return <PopupSkeleton />

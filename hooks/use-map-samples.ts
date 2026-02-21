@@ -9,7 +9,7 @@ export function useMapSamples() {
             if (result.error) throw new Error(result.error)
             return result.data ?? []
         },
-        staleTime: 1000 * 60 * 60,
-        gcTime: 1000 * 60 * 60 * 2,
+        staleTime: 1000 * 60 * 60 * 2, // 2h
+        gcTime: 1000 * 60 * 60 * 24, // 24h
     })
 }

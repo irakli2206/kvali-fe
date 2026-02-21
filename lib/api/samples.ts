@@ -5,6 +5,7 @@ import { Sample } from '@/types'
 import Papa from 'papaparse';
 
 const TABLE = 'dna'
+const MAP_SAMPLES_LIMIT = 20_000
 
 function bpToCE(bp: string | null | undefined): number {
     if (!bp) return 0
@@ -14,7 +15,8 @@ function bpToCE(bp: string | null | undefined): number {
 }
 
 /**
- * THIN FETCH: Only get essential map data.
+ * THIN FETCH: All map data once (capped). Cached client-side; no refetch on pan/zoom.
+ * Optimal for cost + performance + UX at this dataset size.
  */
 export async function getMapSamples() {
     try {
@@ -32,6 +34,7 @@ export async function getMapSamples() {
                 mean_bp
             `)
             .not('g25_string', 'is', null)
+            .limit(MAP_SAMPLES_LIMIT)
             .csv()
 
         if (error) {
@@ -39,9 +42,11 @@ export async function getMapSamples() {
             return { data: null, error: error.message }
         }
 
-        //@ts-ignore
-        const sizeBytes = new Blob([data]).size
-        console.log('getMapSamples response:', (sizeBytes / 1024).toFixed(1), 'KB')
+        if (process.env.NODE_ENV === 'development') {
+            //@ts-ignore
+            const sizeBytes = new Blob([data]).size
+            console.log('getMapSamples response:', (sizeBytes / 1024).toFixed(1), 'KB')
+        }
 
         type MapRow = {
             id: string
@@ -79,15 +84,18 @@ export async function getMapSamples() {
     }
 }
 
+/** Columns needed for popup, distance calc, and map jump – avoids select('*') egress */
+const SAMPLE_DETAIL_COLUMNS = 'id, object_id, culture, location, country, latitude, longitude, source, doi, mean_bp, date_method, sex, y_haplo, y_symbol, mt_haplo, snps_1240k, g25_string'
+
 /**
- * DEEP FETCH: Full row details.
+ * Fetch sample details for popup/detail view. Selects only needed columns to reduce egress.
  */
 export async function getSampleDetails(id: string) {
     try {
         const supabase = await createClient()
         const { data, error } = await supabase
             .from(TABLE)
-            .select('*')
+            .select(SAMPLE_DETAIL_COLUMNS)
             .eq('id', id)
             .single()
 

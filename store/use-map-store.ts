@@ -1,9 +1,6 @@
 import { MapMode, MapTheme, Sample, SampleFilter } from '@/types';
 import { create } from 'zustand'
 
-// Define the shape of your Sample based on your CSV keys
-
-
 interface MapState {
     selectedSample: Sample | null;
     setSelectedSample: (sample: Sample | null) => void;

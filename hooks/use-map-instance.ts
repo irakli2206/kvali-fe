@@ -30,6 +30,8 @@ export function useMapInstance() {
             style: `mapbox://styles/mapbox/${activeTheme.toLowerCase()}`,
             center: [20, 45],
             zoom: 5,
+            attributionControl: false,
+            
         });
 
         mapRef.current = map;

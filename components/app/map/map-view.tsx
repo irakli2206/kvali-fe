@@ -36,7 +36,7 @@ export default function MapView() {
             {isMapReady && mapMode === 'distance' && (
                 <DistanceLegend
                     mapRef={mapRef}
-                    mapData={mapData as Array<Sample & { distance: number }>}
+                    mapData={mapData as unknown as Array<Sample & { distance: number }>}
                 />
             )}
 
