@@ -6,7 +6,9 @@ import { Slider } from '@/components/ui/slider'
 import { formatYear } from '@/lib/utils'
 import { useMapStore } from '@/store/use-map-store'
 import { MapMode, MapTheme, SampleFilter } from '@/types'
-import { Map, RotateCcw } from 'lucide-react'
+import { Map, RotateCcw, Share2 } from 'lucide-react'
+import { buildShareMapParams, shareMapParamsToQuery } from '@/lib/share-map-url'
+import { toast } from 'sonner'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -47,9 +49,34 @@ export function MapControlBar({ onReset }: MapControlBarProps) {
         activeTheme,
         setActiveTheme,
         resetData,
+        selectedSample,
+        targetSample,
+        mapCenter,
+        mapZoom,
     } = useMapStore()
 
     const handleReset = () => (onReset ?? resetData)()
+
+    const handleShare = async () => {
+        const params = buildShareMapParams({
+            timeWindow,
+            sampleFilter,
+            mapMode,
+            selectedYDNA: useMapStore.getState().selectedYDNA,
+            selectedSampleId: selectedSample?.id ?? null,
+            targetSampleId: targetSample?.id ?? null,
+            mapCenter,
+            mapZoom,
+        })
+        const query = shareMapParamsToQuery(params)
+        const url = typeof window !== 'undefined' ? `${window.location.origin}/app${query}` : ''
+        try {
+            await navigator.clipboard.writeText(url)
+            toast.success('Link copied to clipboard')
+        } catch {
+            toast.error('Could not copy link')
+        }
+    }
 
     const showTimeSlider = sampleFilter !== 'modern'
 
@@ -173,6 +200,20 @@ export function MapControlBar({ onReset }: MapControlBarProps) {
                             <TooltipContent side="top" sideOffset={6}>Map theme</TooltipContent>
                         </Tooltip>
 
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="shrink-0"
+                                    aria-label="Share this view"
+                                    onClick={handleShare}
+                                >
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={6}>Share this view</TooltipContent>
+                        </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button

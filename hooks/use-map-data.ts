@@ -3,7 +3,7 @@ import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson'
 import { csvToGeoJSON } from '@/lib/map-utils'
 import { useMapStore } from '@/store/use-map-store'
 import { Sample } from '@/types'
-import { calculateDistances, calculateDistancesFromVector } from '@/lib/api/samples'
+import { calculateDistances, calculateDistancesFromVector, getSampleDetails } from '@/lib/api/samples'
 import { useMapSamples } from './use-map-samples'
 
 const USER_SAMPLE: Partial<Sample> = {
@@ -23,10 +23,12 @@ export function useMapData() {
         setMapMode,
         selectedYDNA,
         setTargetSample,
+        setDemoSampleId,
         selectedCulture,
         setSelectedCulture,
         userG25Vector,
         setUserG25Vector,
+        demoSampleId,
         sampleFilter,
     } = useMapStore()
 
@@ -80,6 +82,35 @@ export function useMapData() {
 
         return { ...baseGeoJSON, features: filteredFeatures } as FeatureCollection<Geometry, GeoJsonProperties>
     }, [mapData, timeWindow, mapMode, selectedYDNA, sampleFilter])
+
+    useEffect(() => {
+        if (!demoSampleId) return
+        const id = demoSampleId
+        setDemoSampleId(null)
+        const run = async () => {
+            const res = await getSampleDetails(id)
+            if (!res.data) return
+            setSelectedCulture(null)
+            setTargetSample(res.data)
+            const topMatches = await calculateDistances(res.data)
+            const DISTANCE_NO_MATCH = 1000
+            if (!topMatches?.length) return
+            const visibleIds = new Set(
+                geojsonData.features.map((f) => f.properties?.id).filter(Boolean) as string[]
+            )
+            const filteredMatches = topMatches.filter((m) => m.id && visibleIds.has(m.id))
+            const distanceMap = new Map(filteredMatches.map((item) => [item.id!, item.distance!]))
+            const mergedData = initialData.map((originalSample: any) => {
+                if (distanceMap.has(originalSample.id)) {
+                    return { ...originalSample, distance: distanceMap.get(originalSample.id) }
+                }
+                return { ...originalSample, distance: DISTANCE_NO_MATCH }
+            })
+            setMapData(mergedData)
+            setMapMode('distance')
+        }
+        run()
+    }, [demoSampleId])
 
     useEffect(() => {
         const vector = userG25Vector

@@ -1,11 +1,19 @@
 import React from 'react';
 import { useMapStore } from '@/store/use-map-store';
 import { Card } from '@/components/ui/card';
-import { X } from 'lucide-react';
+import { X, Copy, Download, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sample } from '@/types';
 import { cn, getSampleFriendlyLabel } from '@/lib/utils';
 import { Map } from 'mapbox-gl';
+import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface DistanceLegendProps {
   mapRef: React.RefObject<Map | null>
@@ -34,10 +42,48 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
 
   if (mapMode !== 'distance' || !targetSample) return null;
 
-  const topMatches = [...mapData]
-    .filter(s => s.id !== targetSample.id && s.distance !== undefined)
-    .sort((a, b) => (a.distance) - (b.distance))
-    .slice(0, 20);
+  const sortedMatches = [...mapData]
+    .filter(s => s.id !== targetSample.id && s.distance !== undefined && s.distance < 20)
+    .sort((a, b) => (a.distance) - (b.distance));
+  const topMatches = sortedMatches.slice(0, 20);
+
+  const formatRow = (s: Sample & { distance: number }) =>
+    `${getSampleFriendlyLabel(s, { countryOnly: true })}\t${s.object_id ?? ''}\t${s.distance < 20 ? s.distance.toFixed(4) : 'N/A'}`;
+  const csvHeader = 'Label,Object ID,Distance';
+  const toCsv = (list: Array<Sample & { distance: number }>) =>
+    [csvHeader, ...list.map(s => `${getSampleFriendlyLabel(s, { countryOnly: true })},${(s.object_id ?? '').replace(/,/g, ' ')},${s.distance < 20 ? s.distance.toFixed(4) : 'N/A'}`)].join('\n');
+
+  const handleCopyTop10 = async () => {
+    const text = sortedMatches.slice(0, 10).map(formatRow).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Top 10 copied');
+    } catch {
+      toast.error('Could not copy');
+    }
+  };
+  const handleDownloadTop10Csv = () => {
+    const csv = toCsv(sortedMatches.slice(0, 10));
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kvali-top10-matches.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Top 10 CSV downloaded');
+  };
+  const handleDownloadAllCsv = () => {
+    const csv = toCsv(sortedMatches);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kvali-all-matches.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Full list downloaded');
+  };
 
   const handleMouseEnter = (id: string) => {
     setHoveredId(id);
@@ -103,6 +149,28 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
             <span>0.10+</span>
           </div>
         </div>
+        {sortedMatches.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full gap-1.5 mt-2 text-[10px] h-7">
+                <Download className="h-3 w-3" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel>Export matches</DropdownMenuLabel>
+              <DropdownMenuItem onClick={handleCopyTop10}>
+                <Copy className="h-3 w-3 mr-2" /> Copy top 10
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadTop10Csv}>
+                <FileDown className="h-3 w-3 mr-2" /> Download top 10 CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadAllCsv}>
+                <Download className="h-3 w-3 mr-2" /> Download all CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {topMatches.length > 0 && (

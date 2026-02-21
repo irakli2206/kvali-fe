@@ -54,7 +54,7 @@ function Hero({ v2 }: { v2?: boolean }) {
         <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-100" : "bg-[#f5f5f5]")}>
           {!v2 && (
             <DitherWaves
-              enableMouseInteraction={true}
+              enableMouseInteraction={false}
               dither={false}
               className="opacity-50"
               onReady={() => setBackgroundReady(true)}
@@ -156,7 +156,7 @@ function Hero({ v2 }: { v2?: boolean }) {
                 <p className="text-sm font-normal sm:px-2 px-10 text-center">
                   Compatible with major DNA providers
                 </p>
-                <div className="flex items-center gap-8 grayscale-100 brightness-150 opacity-75 contrast-50">
+                <div className="flex items-center gap-8 grayscale-100 brightness-100 opacity-75 contrast-50">
                   <Logo23andMe className="h-12 w-auto" />
                   <LogoMyHeritage className="h-8 w-auto" />
                   <LogoAncestry className="h-6 w-auto" />
