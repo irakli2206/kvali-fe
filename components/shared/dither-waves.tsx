@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -112,6 +112,9 @@ const fragmentShader = `
 
 // —— Scene: one mesh, one material ——
 
+/** When content sits on top of the canvas, pass a ref updated from window mousemove so waves still react. */
+export type ExternalMouseRef = RefObject<{ clientX: number; clientY: number }>;
+
 interface WaveProps {
   waveSpeed: number;
   waveFrequency: number;
@@ -125,6 +128,7 @@ interface WaveProps {
   enableMouse: boolean;
   mouseRadius: number;
   onReady?: () => void;
+  externalMouseRef?: ExternalMouseRef;
 }
 
 const F5F5F5: THREE.Vector3Tuple = [245 / 255, 245 / 255, 245 / 255];
@@ -142,6 +146,7 @@ function Waves({
   enableMouse,
   mouseRadius,
   onReady,
+  externalMouseRef,
 }: WaveProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const readyCalled = useRef(false);
@@ -172,6 +177,12 @@ function Waves({
     if (!readyCalled.current && onReady) {
       readyCalled.current = true;
       onReady();
+    }
+    if (enableMouse && externalMouseRef?.current) {
+      const rect = gl.domElement.getBoundingClientRect();
+      const dpr = gl.getPixelRatio();
+      mouseRef.current.x = (externalMouseRef.current.clientX - rect.left) * dpr;
+      mouseRef.current.y = (externalMouseRef.current.clientY - rect.top) * dpr;
     }
     const u = uniforms as Record<string, { value: unknown }>;
     if (!disableAnimation) (u.time.value as number) = state.clock.elapsedTime;
@@ -236,6 +247,8 @@ export interface DitherWavesProps {
   className?: string;
   /** Called after the first frame is rendered (e.g. to show content only once background has painted). */
   onReady?: () => void;
+  /** When the canvas is behind content (pointer-events-none), pass a ref updated from window mousemove so waves still react. */
+  externalMouseRef?: ExternalMouseRef;
 }
 
 export default function DitherWaves({
@@ -252,6 +265,7 @@ export default function DitherWaves({
   mouseRadius = 1,
   className = "",
   onReady,
+  externalMouseRef,
 }: DitherWavesProps) {
   return (
     <div className={className} style={{ width: "100%", height: "100%" }}>
@@ -277,6 +291,7 @@ export default function DitherWaves({
           enableMouse={enableMouseInteraction}
           mouseRadius={mouseRadius}
           onReady={onReady}
+          externalMouseRef={externalMouseRef}
         />
       </Canvas>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import SplashCursor from "@/components/animations/splash-cursor";
 import { motion } from "motion/react";
 import { Logo23andMe, LogoMyHeritage, LogoAncestry } from "@/components/shared/logos";
@@ -23,6 +23,22 @@ const MotionButton = motion.create(Button)
 function Hero({ v2 }: { v2?: boolean }) {
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [backgroundReady, setBackgroundReady] = useState(false);
+  const mouseRef = useRef(
+    typeof window !== "undefined"
+      ? { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 }
+      : { clientX: 0, clientY: 0 }
+  );
+  // Track mouse so DitherWaves can react; sync center on mount (e.g. after resize before first move)
+  useEffect(() => {
+    mouseRef.current.clientX = window.innerWidth / 2;
+    mouseRef.current.clientY = window.innerHeight / 2;
+    const onMove = (e: MouseEvent) => {
+      mouseRef.current.clientX = e.clientX;
+      mouseRef.current.clientY = e.clientY;
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
   // v2: show content after short delay so background can paint first. !v2: DitherWaves calls onReady after first frame; fallback if it never fires
   useEffect(() => {
     if (v2) {
@@ -35,13 +51,14 @@ function Hero({ v2 }: { v2?: boolean }) {
   return (
     <section>
       <div className="w-full h-full">
-        <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-200" : "bg-[#f5f5f5]")}>
+        <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-100" : "bg-[#f5f5f5]")}>
           {!v2 && (
             <DitherWaves
-              enableMouseInteraction={false}
+              enableMouseInteraction={true}
               dither={false}
               className="opacity-50"
               onReady={() => setBackgroundReady(true)}
+              externalMouseRef={mouseRef}
             />
           )}
           {v2 && <SplashCursor
