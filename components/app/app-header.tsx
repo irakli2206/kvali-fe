@@ -43,13 +43,24 @@ import UploadDNASheet from '../views/map/upload-dna-sheet'
 import { useMapSamples } from '@/hooks/use-map-samples'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { LogoIcon } from '../shared/logo-icon'
+import { useMapStore } from '@/store/use-map-store'
+import { filterSamplesByMapFilters } from '@/lib/map-utils'
 
 export default function AppHeader() {
-    const { data: samples = [] } = useMapSamples()
+    const { data: allSamples = [] } = useMapSamples()
     const [open, setOpen] = React.useState(false)
 
-
-
+    const { timeWindow, sampleFilter, mapMode, selectedYDNA } = useMapStore()
+    const samples = React.useMemo(
+        () =>
+            filterSamplesByMapFilters(allSamples, {
+                timeWindow,
+                sampleFilter,
+                mapMode,
+                selectedYDNA,
+            }),
+        [allSamples, timeWindow, sampleFilter, mapMode, selectedYDNA]
+    )
 
     return (
         <div className='w-full flex justify-between items-center gap-4'>

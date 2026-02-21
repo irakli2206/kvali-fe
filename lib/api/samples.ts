@@ -27,6 +27,7 @@ export async function getMapSamples() {
                 latitude, 
                 longitude,
                 culture,
+                country,
                 y_haplo,
                 mean_bp
             `)
@@ -48,6 +49,7 @@ export async function getMapSamples() {
             latitude: string
             longitude: string
             culture: string
+            country: string | null
             y_haplo: string
             mean_bp: string
         }

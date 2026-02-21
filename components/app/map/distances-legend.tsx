@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sample } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getSampleFriendlyLabel } from '@/lib/utils';
 import { Map } from 'mapbox-gl';
 
 interface DistanceLegendProps {
@@ -13,13 +13,12 @@ interface DistanceLegendProps {
 }
 
 const getDistanceBlue = (distance: number) => {
-  if (distance === undefined) return '#d6d3d1'; 
-  if (distance <= 0.02) return '#1d4ed8';
-  if (distance <= 0.04) return '#1d4ed8';
-  if (distance <= 0.06) return '#2563eb';
-  if (distance <= 0.08) return '#3b82f6';
-  if (distance <= 0.10) return '#93c5fd';
-  return '#d6d3d1';
+  if (distance === undefined) return '#e5e5e5';
+  if (distance <= 0.025) return '#1d4ed8';
+  if (distance <= 0.05) return '#3b82f6';
+  if (distance <= 0.075) return '#60a5fa';
+  if (distance <= 0.1) return '#bfdbfe';
+  return '#e5e5e5';
 };
 
 export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
@@ -82,15 +81,25 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
           </Button>
         </div>
 
-        <div className="text-[11px] font-medium text-stone-800 truncate px-2 border-l-2 border-blue-950">
-          Ref: {targetSample.culture} ({targetSample.object_id})
+        <div
+          className="text-[11px] font-medium text-stone-800 truncate px-2 border-l-2 border-blue-950"
+          title={[targetSample.culture, targetSample.object_id].filter(Boolean).join(' · ') || undefined}
+        >
+          Ref: {getSampleFriendlyLabel(targetSample, { countryOnly: true })}
         </div>
 
         <div className="mt-3">
-          <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-[#1d4ed8] via-[#3b82f6] to-[#dbeafe]" />
+          <div
+            className="h-1.5 w-full rounded-full"
+            style={{
+              background: 'linear-gradient(to right, #1d4ed8, #3b82f6, #60a5fa, #bfdbfe, #e5e5e5)',
+            }}
+          />
           <div className="flex justify-between text-[9px] font-mono text-stone-500 mt-1">
-            <span>0.00</span>
+            <span>0</span>
+            <span>0.025</span>
             <span>0.05</span>
+            <span>0.075</span>
             <span>0.10+</span>
           </div>
         </div>
@@ -128,11 +137,14 @@ export function DistanceLegend({ mapRef, mapData }: DistanceLegendProps) {
                       )} 
                       style={{ backgroundColor: currentHue }}
                     />
-                    <span className={cn(
-                      "truncate font-medium transition-colors",
-                      isSelected ? "text-blue-600" : "text-stone-700"
-                    )}>
-                      {`${sample.culture} (${sample.object_id})`}
+                    <span
+                      className={cn(
+                        "truncate font-medium transition-colors",
+                        isSelected ? "text-blue-600" : "text-stone-700"
+                      )}
+                      title={sample.object_id ? `ID: ${sample.object_id}` : undefined}
+                    >
+                      {getSampleFriendlyLabel(sample, { countryOnly: true })}
                     </span>
                   </div>
                   <span 

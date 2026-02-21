@@ -1,14 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import SplashCursor from "@/components/animations/splash-cursor";
 import { motion } from "motion/react";
 import { Logo23andMe, LogoMyHeritage, LogoAncestry } from "@/components/shared/logos";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import DitherWaves from "@/components/shared/dither-waves";
+import HowItWorksDialog from "@/components/views/hero/how-it-works-dialog";
 
 const springTransition = {
   type: "spring" as const,
@@ -20,6 +21,7 @@ const MotionButton = motion.create(Button)
 
 
 function Hero({ v2 }: { v2?: boolean }) {
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   return (
     <section>
       <div className="w-full h-full">
@@ -37,7 +39,11 @@ function Hero({ v2 }: { v2?: boolean }) {
             COLOR_UPDATE_SPEED={10}
           />}
         </div>
-        <div className="relative w-full pt-0 md:pt-0 pb-6 md:pb-10">
+        <motion.div
+          initial={{ filter: "blur(10px)" }}
+          animate={{ filter: "blur(0px)" }}
+          transition={{ ...springTransition }}
+          className="relative w-full pt-0 md:pt-0 pb-6 md:pb-10">
           <div className="container mx-auto relative z-10 ">
             <div className="flex flex-col max-w-5xl mx-auto gap-8">
               <div className="relative flex flex-col text-center items-center sm:gap-4 gap-2">
@@ -82,7 +88,15 @@ function Hero({ v2 }: { v2?: boolean }) {
                   </Link>
                 </MotionButton>
 
-                <Button size='cta' variant="light" className="rounded-full text-base hover:bg-primary/20 text-primary hover:text-primary">How It Works</Button>
+                <Button
+                  size="cta"
+                  variant="light"
+                  className="rounded-full text-base hover:bg-primary/20 text-primary hover:text-primary"
+                  onClick={() => setHowItWorksOpen(true)}
+                >
+                  How It Works
+                </Button>
+                <HowItWorksDialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen} />
                 {/* <div className="flex items-center sm:gap-7 gap-3">
                   <div className="gap-1 flex flex-col items-start">
                     <div className="flex gap-1">
@@ -112,7 +126,7 @@ function Hero({ v2 }: { v2?: boolean }) {
               </footer>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

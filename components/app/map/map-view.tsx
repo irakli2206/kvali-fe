@@ -14,7 +14,7 @@ import { DistanceLegend } from './distances-legend'
 
 export default function MapView() {
     const { mapRef, mapContainerRef, activeTheme, isMapReady } = useMapInstance()
-    const { geojsonData, handleCalculateDists, resetData } = useMapData()
+    const { geojsonData, mapData, handleCalculateDists, resetData } = useMapData()
     const { selectedSample, targetSample, mapMode, selectedCulture, hoveredId } = useMapStore()
 
     useMapSync({
@@ -25,6 +25,7 @@ export default function MapView() {
         selectedCulture,
         activeTheme,
         hoveredId,
+        selectedSampleId: selectedSample?.id ?? null,
     })
     const { popupContainer, closePopup } = useMapMarkers(mapRef, geojsonData)
 
@@ -35,10 +36,7 @@ export default function MapView() {
             {isMapReady && mapMode === 'distance' && (
                 <DistanceLegend
                     mapRef={mapRef}
-                    mapData={geojsonData.features.map((f) => ({
-                        ...(f.properties as Sample),
-                        distance: f.properties?.distance,
-                    }))}
+                    mapData={mapData as Array<Sample & { distance: number }>}
                 />
             )}
 

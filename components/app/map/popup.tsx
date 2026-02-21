@@ -39,7 +39,7 @@ export default function MapPopup({ sample, handleCalculateDists, onClose }: { sa
     const content = getPopupContent(data)
 
     return (
-        <div className="w-md min-h-[300px] bg-card border rounded-md drop-shadow-xs flex flex-col">
+        <div className="font-sans w-md min-h-[300px] bg-card border rounded-md drop-shadow-xs flex flex-col">
             <header className='flex w-full p-1 items-center justify-between border-b'>
                 <Button variant="ghost" size="icon-sm" onClick={onClose}>
                     <X className='' />

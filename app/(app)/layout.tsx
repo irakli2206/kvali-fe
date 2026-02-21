@@ -15,7 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Suspense fallback={null}>
                 <DnaPurchaseToast />
             </Suspense>
-            <Banner>Under active development. Some samples have duplicating coordinates.</Banner>
+            <Banner>Under active development</Banner>
             <main className="w-full h-[100dvh] bg-background p-4 pt-12 flex flex-col gap-4 overflow-hidden">
                 <AppHeader />
                 <div className="relative flex-1 w-full bg-background rounded-md drop-shadow-xs border  overflow-hidden">

@@ -14,6 +14,7 @@ interface UseMapSyncProps {
     selectedCulture: string | null;
     activeTheme: string;
     hoveredId: string | null;
+    selectedSampleId: string | null;
 }
 
 export function useMapSync({
@@ -23,7 +24,8 @@ export function useMapSync({
     targetSample,
     selectedCulture,
     activeTheme,
-    hoveredId
+    hoveredId,
+    selectedSampleId
 }: UseMapSyncProps) {
     useEffect(() => {
         const map = mapRef.current;
@@ -40,6 +42,7 @@ export function useMapSync({
             }
 
             const safeHoverId = hoveredId || "NON_EXISTENT_ID";
+            const safeSelectedId = selectedSampleId || "NON_EXISTENT_ID";
             const isAnyHovered = hoveredId !== null;
 
             if (!map.getLayer('ancient-points')) {
@@ -50,7 +53,8 @@ export function useMapSync({
                     layout: {
                         'circle-sort-key': [
                             'case',
-                            ['==', ['get', 'id'], safeHoverId], 2,
+                            ['==', ['get', 'id'], safeSelectedId], 4,
+                            ['==', ['get', 'id'], safeHoverId], 3,
                             1
                         ]
                     },
@@ -71,18 +75,21 @@ export function useMapSync({
 
             map.setPaintProperty('ancient-points', 'circle-color', [
                 'case',
+                ['==', ['get', 'id'], safeSelectedId], '#2563eb',
                 ['==', ['get', 'id'], safeHoverId], '#2563eb',
                 baseColor as any
             ]);
 
             map.setPaintProperty('ancient-points', 'circle-opacity', [
                 'case',
+                ['==', ['get', 'id'], safeSelectedId], 1.0,
                 ['==', ['get', 'id'], safeHoverId], 1.0,
                 isAnyHovered ? 0.3 : 1
             ]);
 
             const sortKeyLogic = [
                 'case',
+                ['==', ['get', 'id'], safeSelectedId], 4,
                 ['==', ['get', 'id'], safeHoverId], 3,
                 ['all',
                     ['==', mapMode, 'distance'],
@@ -101,6 +108,7 @@ export function useMapSync({
 
             map.setPaintProperty('ancient-points', 'circle-radius', [
                 'case',
+                ['==', ['get', 'id'], safeSelectedId], 6,
                 ['==', ['get', 'id'], safeHoverId], 6,
                 4
             ]);
@@ -121,5 +129,5 @@ export function useMapSync({
         return () => {
             map.off('idle', attemptSync);
         };
-    }, [geojsonData, mapMode, targetSample, selectedCulture, activeTheme, hoveredId, mapRef]);
+    }, [geojsonData, mapMode, targetSample, selectedCulture, activeTheme, hoveredId, selectedSampleId, mapRef]);
 }

@@ -87,6 +87,10 @@ export function useMapData() {
 
         setUserG25Vector(null)
 
+        const visibleIds = new Set(
+            geojsonData.features.map((f) => f.properties?.id).filter(Boolean) as string[]
+        )
+
         const run = async () => {
             const topMatches: Partial<Sample & { distance: number }>[] = await calculateDistancesFromVector(vector)
             const DISTANCE_NO_MATCH = 1000
@@ -95,7 +99,8 @@ export function useMapData() {
             setSelectedCulture(null)
             setTargetSample({ ...USER_SAMPLE, g25_string: vector.join(',') } as Sample)
 
-            const distanceMap = new Map(topMatches.map((item) => [item.id, item.distance]))
+            const filteredMatches = topMatches.filter((m) => m.id && visibleIds.has(m.id))
+            const distanceMap = new Map(filteredMatches.map((item) => [item.id!, item.distance!]))
             const mergedData = initialData.map((originalSample: any) => {
                 if (distanceMap.has(originalSample.id)) {
                     return { ...originalSample, distance: distanceMap.get(originalSample.id) }
@@ -107,7 +112,7 @@ export function useMapData() {
             setMapMode('distance')
         }
         run()
-    }, [userG25Vector, setUserG25Vector, setSelectedCulture, setTargetSample, setMapMode, initialData])
+    }, [userG25Vector, setUserG25Vector, setSelectedCulture, setTargetSample, setMapMode, initialData, geojsonData])
 
     const handleCalculateDists = async (target: Sample) => {
         const topMatches: Partial<Sample & { distance: number }>[] = await calculateDistances(target)
@@ -117,7 +122,11 @@ export function useMapData() {
         setSelectedCulture(null)
         setTargetSample(target)
 
-        const distanceMap = new Map(topMatches.map((item) => [item.id, item.distance]))
+        const visibleIds = new Set(
+            geojsonData.features.map((f) => f.properties?.id).filter(Boolean) as string[]
+        )
+        const filteredMatches = topMatches.filter((m) => m.id && visibleIds.has(m.id))
+        const distanceMap = new Map(filteredMatches.map((item) => [item.id!, item.distance!]))
         const mergedData = initialData.map((originalSample: any) => {
             if (distanceMap.has(originalSample.id)) {
                 return { ...originalSample, distance: distanceMap.get(originalSample.id) }

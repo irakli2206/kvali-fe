@@ -112,12 +112,11 @@ export const distanceColors = [
     'interpolate',
     ['linear'],
     ['get', 'distance'],
-    0, '#1d4ed8',      
-    0.02, '#1d4ed8', 
-    0.04, '#2563eb',
-    0.06, '#3b82f6',   
-    0.08, '#93c5fd', 
-    0.1, '#d6d3d1' 
+    0, '#1d4ed8',
+    0.025, '#3b82f6',
+    0.05, '#60a5fa',
+    0.075, '#bfdbfe',
+    0.1, '#e5e5e5'
 ];
 
 
@@ -134,3 +133,46 @@ export const getUniqueCultures = (data: any[]) => {
 
     return Array.from(new Set(cultures)).sort();
 };
+
+type MapFilterState = {
+    timeWindow: [number, number];
+    sampleFilter: 'all' | 'ancient' | 'modern';
+    mapMode: string;
+    selectedYDNA: string[];
+};
+
+/**
+ * Filter samples by the same rules as the map (time range, ancient/modern, Y-DNA).
+ * Use this so culture/ID search only offer options that are visible on the map.
+ */
+export function filterSamplesByMapFilters(
+    samples: any[],
+    filters: MapFilterState
+): any[] {
+    if (!samples?.length) return [];
+    const { timeWindow, sampleFilter, mapMode, selectedYDNA } = filters;
+    const minYear = timeWindow?.[0] ?? -10000;
+    const maxYear = timeWindow?.[1] ?? 2026;
+
+    return samples.filter((row) => {
+        const bp = typeof row.mean_bp === 'number' ? row.mean_bp : parseFloat(String(row.mean_bp ?? '').replace(',', '.'));
+        const isAncient = !isNaN(bp) && bp > 0;
+        if (sampleFilter === 'ancient' && !isAncient) return false;
+        if (sampleFilter === 'modern' && isAncient) return false;
+
+        const yearCE = isAncient ? Math.round(1950 - bp) : NaN;
+        const isWithinTime = isNaN(yearCE) || (yearCE >= minYear && yearCE <= maxYear);
+        if (!isWithinTime) return false;
+
+        if (mapMode === 'ydna') {
+            const yHaplo = row.y_haplo;
+            const isValidY = yHaplo && !String(yHaplo).toLowerCase().startsWith('n/a') && !['null', 'unknown', '', 'None', '..'].includes(String(yHaplo));
+            if (!isValidY) return false;
+            if (selectedYDNA?.length > 0) {
+                const group = String(yHaplo).slice(0, 2);
+                return selectedYDNA.includes(group);
+            }
+        }
+        return true;
+    });
+}
