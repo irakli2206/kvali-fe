@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run export-map-samples && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "export-map-samples": "node scripts/export-map-samples.mjs"
   },
   "overrides": {
     "zod": "$zod",

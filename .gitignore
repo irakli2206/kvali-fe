@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# optional static map data (run npm run export-map-samples to generate)
+/public/data/map-samples.json
+
 # env files (can opt-in for committing if needed)
 .env*
 

@@ -124,6 +124,7 @@ interface WaveProps {
   disableAnimation: boolean;
   enableMouse: boolean;
   mouseRadius: number;
+  onReady?: () => void;
 }
 
 const F5F5F5: THREE.Vector3Tuple = [245 / 255, 245 / 255, 245 / 255];
@@ -140,8 +141,10 @@ function Waves({
   disableAnimation,
   enableMouse,
   mouseRadius,
+  onReady,
 }: WaveProps) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const readyCalled = useRef(false);
   const { size, viewport, gl } = useThree();
 
   const uniforms = useMemo(
@@ -166,6 +169,10 @@ function Waves({
   const mouseRef = useRef({ x: 0, y: 0 });
 
   useFrame((state) => {
+    if (!readyCalled.current && onReady) {
+      readyCalled.current = true;
+      onReady();
+    }
     const u = uniforms as Record<string, { value: unknown }>;
     if (!disableAnimation) (u.time.value as number) = state.clock.elapsedTime;
     (u.waveSpeed.value as number) = waveSpeed;
@@ -227,6 +234,8 @@ export interface DitherWavesProps {
   enableMouseInteraction?: boolean;
   mouseRadius?: number;
   className?: string;
+  /** Called after the first frame is rendered (e.g. to show content only once background has painted). */
+  onReady?: () => void;
 }
 
 export default function DitherWaves({
@@ -242,6 +251,7 @@ export default function DitherWaves({
   enableMouseInteraction = true,
   mouseRadius = 1,
   className = "",
+  onReady,
 }: DitherWavesProps) {
   return (
     <div className={className} style={{ width: "100%", height: "100%" }}>
@@ -266,6 +276,7 @@ export default function DitherWaves({
           disableAnimation={disableAnimation}
           enableMouse={enableMouseInteraction}
           mouseRadius={mouseRadius}
+          onReady={onReady}
         />
       </Canvas>
     </div>

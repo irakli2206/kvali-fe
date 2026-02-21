@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SplashCursor from "@/components/animations/splash-cursor";
 import { motion } from "motion/react";
 import { Logo23andMe, LogoMyHeritage, LogoAncestry } from "@/components/shared/logos";
@@ -22,11 +22,28 @@ const MotionButton = motion.create(Button)
 
 function Hero({ v2 }: { v2?: boolean }) {
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [backgroundReady, setBackgroundReady] = useState(false);
+  // v2: show content after short delay so background can paint first. !v2: DitherWaves calls onReady after first frame; fallback if it never fires
+  useEffect(() => {
+    if (v2) {
+      const t = setTimeout(() => setBackgroundReady(true), 100);
+      return () => clearTimeout(t);
+    }
+    const fallback = setTimeout(() => setBackgroundReady(true), 800);
+    return () => clearTimeout(fallback);
+  }, [v2]);
   return (
     <section>
       <div className="w-full h-full">
-        <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-200" : "bg-transparent")}>
-          {!v2 && <DitherWaves enableMouseInteraction={false} dither={false} className="opacity-50" />}
+        <div className={cn("absolute inset-0 z-0 pointer-events-none", v2 ? "bg-neutral-200" : "bg-[#f5f5f5]")}>
+          {!v2 && (
+            <DitherWaves
+              enableMouseInteraction={false}
+              dither={false}
+              className="opacity-50"
+              onReady={() => setBackgroundReady(true)}
+            />
+          )}
           {v2 && <SplashCursor
             SIM_RESOLUTION={128}
             DYE_RESOLUTION={1440}
@@ -40,8 +57,12 @@ function Hero({ v2 }: { v2?: boolean }) {
           />}
         </div>
         <motion.div
-          initial={{ filter: "blur(10px)" }}
-          animate={{ filter: "blur(0px)" }}
+          initial={{ opacity: 0, filter: "blur(10px)" }}
+          animate={
+            backgroundReady
+              ? { opacity: 1, filter: "blur(0px)" }
+              : { opacity: 0, filter: "blur(10px)" }
+          }
           transition={{ ...springTransition }}
           className="relative w-full pt-0 md:pt-0 pb-6 md:pb-10">
           <div className="container mx-auto relative z-10 ">
@@ -49,7 +70,7 @@ function Hero({ v2 }: { v2?: boolean }) {
               <div className="relative flex flex-col text-center items-center sm:gap-4 gap-2">
                 <motion.h1
                   initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: backgroundReady ? 1 : 0, y: backgroundReady ? 0 : 12 }}
                   transition={{ ...springTransition, delay: 0 }}
                   className="lg:text-[80px] md:text-7xl text-5xl font-semibold text-foreground/90 leading-14 md:leading-20"
                 >
@@ -58,7 +79,7 @@ function Hero({ v2 }: { v2?: boolean }) {
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: backgroundReady ? 1 : 0, y: backgroundReady ? 0 : 12 }}
                   transition={{ ...springTransition, delay: 0.1 }}
                   className="text-lg font-normal max-w-2xl text-muted-foreground"
                 >
@@ -67,7 +88,7 @@ function Hero({ v2 }: { v2?: boolean }) {
               </div>
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
+                animate={{ opacity: backgroundReady ? 1 : 0, y: backgroundReady ? 0 : 12 }}
                 transition={{ ...springTransition, delay: 0.2 }}
                 className="flex items-center flex-col md:flex-row justify-center gap-8"
               >

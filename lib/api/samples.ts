@@ -14,14 +14,18 @@ function bpToCE(bp: string | null | undefined): number {
     return Math.round(1950 - num)
 }
 
+function parseCoord(val: string): number {
+    if (!val) return 0
+    return parseFloat(String(val).replace(',', '.')) || 0
+}
+
 /**
- * THIN FETCH: All map data once (capped). Cached client-side; no refetch on pan/zoom.
- * Optimal for cost + performance + UX at this dataset size.
+ * THIN FETCH: All map data once (capped). CSV is smaller than JSON for this tabular data.
  */
 export async function getMapSamples() {
     try {
         const supabase = await createClient()
-        const { data, error } = await supabase
+        const { data: csvData, error } = await supabase
             .from(TABLE)
             .select(`
                 id, 
@@ -42,11 +46,8 @@ export async function getMapSamples() {
             return { data: null, error: error.message }
         }
 
-        if (process.env.NODE_ENV === 'development') {
-            //@ts-ignore
-            const sizeBytes = new Blob([data]).size
-            console.log('getMapSamples response:', (sizeBytes / 1024).toFixed(1), 'KB')
-        }
+        const sizeBytes = new Blob([csvData]).size
+        console.log('[getMapSamples] egress:', (sizeBytes / 1024).toFixed(1), 'KB')
 
         type MapRow = {
             id: string
@@ -59,23 +60,22 @@ export async function getMapSamples() {
             mean_bp: string
         }
 
-        const parsed: Papa.ParseResult<MapRow> = Papa.parse(data, {
+        const parsed: Papa.ParseResult<MapRow> = Papa.parse(csvData, {
             header: true,
             dynamicTyping: false,
             skipEmptyLines: true
-        });
-
-        const parseCoord = (val: string) => {
-            if (!val) return 0;
-            return parseFloat(String(val).replace(',', '.')) || 0;
-        };
+        })
 
         const cleanedData = parsed.data.map((item) => ({
-            ...item,
+            id: item.id,
+            object_id: item.object_id,
             latitude: parseCoord(item.latitude),
             longitude: parseCoord(item.longitude),
+            culture: item.culture,
+            country: item.country,
+            y_haplo: item.y_haplo,
             mean_bp: parseCoord(item.mean_bp),
-        }));
+        }))
 
         return { data: cleanedData, error: null }
     } catch (err) {
